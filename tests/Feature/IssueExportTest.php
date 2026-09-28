@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Enums\IssueVisibility;
 use App\Enums\WorkspaceRole;
+use App\Models\CustomField;
+use App\Models\CustomFieldValue;
 use App\Models\Issue;
 use App\Models\Project;
 use App\Models\User;
@@ -71,6 +73,36 @@ class IssueExportTest extends TestCase
 
         $this->assertStringContainsString('On the website', $body);
         $this->assertStringNotContainsString('In the app', $body);
+    }
+
+    #[Test]
+    public function an_issue_that_leaves_a_custom_field_empty_does_not_break_the_file(): void
+    {
+        // The usual case on any project with custom fields, and the one the tests did
+        // not have: every issue filled every field. An empty one threw mid-stream.
+        [$workspace, $staff] = $this->workspaceWithMember(WorkspaceRole::Member, 'acme');
+
+        app(Tenancy::class)->run($workspace, function () {
+            $project = Project::factory()->create(['key' => 'WEB']);
+            $field = CustomField::create([
+                'project_id' => $project->id, 'name' => 'Page URL', 'key' => 'page_url', 'type' => 'text', 'position' => 0,
+            ]);
+
+            $filled = Issue::factory()->create(['project_id' => $project->id, 'title' => 'Filled in']);
+            Issue::factory()->create(['project_id' => $project->id, 'title' => 'Left empty']);
+
+            CustomFieldValue::create([
+                'issue_id' => $filled->id, 'custom_field_id' => $field->id, 'value' => 'https://acme.test/checkout',
+            ]);
+        });
+
+        $rows = $this->csv($this->actingAs($staff)->get($this->workspaceUrl($workspace, '/issues/export'))->assertOk());
+        $body = implode("\n", $rows);
+
+        $this->assertCount(3, $rows, 'Header plus both issues.');
+        $this->assertStringContainsString('field:page_url', $rows[0]);
+        $this->assertStringContainsString('https://acme.test/checkout', $body);
+        $this->assertStringContainsString('Left empty', $body);
     }
 
     #[Test]

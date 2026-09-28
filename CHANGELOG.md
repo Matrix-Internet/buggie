@@ -220,6 +220,11 @@ today you are running `main`, which is honest rather than ideal — see
 
 ### Fixed
 
+- **CSV export broke off on projects with custom fields.** An issue that left a field
+  empty, which is most of them, raised an error partway through the file. Only
+  projects with custom fields were affected, such as ones made from the *Client
+  website build* template.
+
 - **CSV export columns were misaligned.** The header listed `estimate` and
   `time_spent`, but rows never filled them in, so `url` and every custom field sat two
   columns to the left of their headings. Both now have values. A client's export

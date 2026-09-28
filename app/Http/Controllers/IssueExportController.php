@@ -167,7 +167,11 @@ class IssueExportController extends Controller
             workspace_url($slug, "issues/{$issue->key}"),
             // Through safe() like every other free-text column: a custom field value
             // is typed by a person, and "=1+1" in a spreadsheet is a formula.
-            ...$fields->map(fn ($field) => $this->safe($values[$field->key]?->value)),
+            //
+            // get(), not $values[...]: most issues leave most fields empty, and reading
+            // a missing key is a warning Laravel turns into an exception — thrown after
+            // the headers have gone, so the download simply broke off partway.
+            ...$fields->map(fn ($field) => $this->safe($values->get($field->key)?->value)),
         ];
     }
 
