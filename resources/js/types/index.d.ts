@@ -71,6 +71,7 @@ export interface SharedProps {
         plan: string;
         usage: Record<string, { used: number; limit: number | null; over: boolean; near: boolean }>;
         on_trial: boolean;
+        payment_failed: boolean;
         trial_days_left: number;
         can_manage: boolean;
     } | null;

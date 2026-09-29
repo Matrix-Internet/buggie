@@ -4,16 +4,19 @@ namespace App\Http\Controllers\Api;
 
 use App\Actions\AddComment;
 use App\Actions\CreateIssue;
+use App\Enums\IssueEventType;
 use App\Enums\IssueVisibility;
 use App\Http\Controllers\Controller;
 use App\Models\Issue;
 use App\Models\Project;
 use App\Models\User;
+use App\Support\Attachments\AttachmentStore;
 use App\Support\Mail\EmailBody;
 use App\Support\Mail\ReplyAddress;
 use App\Support\Tenancy\Tenancy;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
@@ -27,6 +30,9 @@ use Illuminate\Support\Str;
  */
 class InboundMailController extends Controller
 {
+    /** Per message. A mail client's signature logos count, so not too few. */
+    private const MAX_FILES = 10;
+
     public function __invoke(Request $request, Tenancy $tenancy): JsonResponse
     {
         if (! $this->signatureIsValid($request)) {
@@ -54,10 +60,11 @@ class InboundMailController extends Controller
         }
 
         $from = $request->input('from') ?? $request->input('From');
+        [$files, $refused] = $this->attachments($request);
 
         return $kind === 'bugs'
-            ? $this->createIssue($tenancy, $token, $request, $body, $from)
-            : $this->addComment($tenancy, $token, $body);
+            ? $this->createIssue($tenancy, $token, $request, $body, $from, $files, $refused)
+            : $this->addComment($tenancy, $token, $body, $files, $refused);
     }
 
     private function createIssue(
@@ -66,6 +73,8 @@ class InboundMailController extends Controller
         Request $request,
         string $body,
         ?string $from,
+        array $files,
+        array $refused,
     ): JsonResponse {
         $project = Project::withoutGlobalScopes()->where('inbound_token', $token)->first();
 
@@ -75,17 +84,24 @@ class InboundMailController extends Controller
 
         $subject = trim((string) $request->input('subject')) ?: 'Emailed report';
 
-        $issue = $tenancy->run($project->workspace, function () use ($project, $subject, $body, $from) {
+        $issue = $tenancy->run($project->workspace, function () use ($project, $subject, $body, $from, $files, $refused) {
             // Never attributed from the From: header. The project address is printed on
             // the project screen and given to clients, and anybody can write any sender
             // — trusting it let a stranger file an issue as a named member, shared
             // with every client on the project. So an emailed issue is internal and
             // nobody's until the team triages it; who sent it is recorded in its text.
-            return app(CreateIssue::class)->handle($project, [
+            $issue = app(CreateIssue::class)->handle($project, [
                 'title' => Str::limit($subject, 200, ''),
-                'description' => $this->document($body, $from),
+                'description' => $this->document($body, $from, $refused),
                 'visibility' => IssueVisibility::Internal->value,
             ], null);
+
+            foreach ($files as $file) {
+                $attachment = AttachmentStore::store($file, $issue, $issue, null);
+                $issue->recordEvent(IssueEventType::AttachmentAdded, ['filename' => $attachment->filename], null);
+            }
+
+            return $issue;
         });
 
         return response()->json(['issue' => $issue->key], 200);
@@ -99,7 +115,7 @@ class InboundMailController extends Controller
      * be able to open the issue: access taken away after the email went out takes
      * the reply address with it.
      */
-    private function addComment(Tenancy $tenancy, string $token, string $body): JsonResponse
+    private function addComment(Tenancy $tenancy, string $token, string $body, array $files, array $refused): JsonResponse
     {
         $issued = ReplyAddress::verify($token);
 
@@ -115,7 +131,7 @@ class InboundMailController extends Controller
             return response()->json(['message' => 'Unknown issue; ignored.'], 200);
         }
 
-        $result = $tenancy->run($issue->workspace, function () use ($issue, $user, $body) {
+        $result = $tenancy->run($issue->workspace, function () use ($issue, $user, $body, $files, $refused) {
             $issue = Issue::find($issue->id);
 
             if ($issue === null || ! Gate::forUser($user)->allows('view', $issue)) {
@@ -128,11 +144,17 @@ class InboundMailController extends Controller
             // the app; anybody else writes in public. AddComment routes a client's
             // comment through ClientConversation, as it does in the app.
             $comment = app(AddComment::class)->handle($issue, [
-                'body' => $this->document($body, null),
+                'body' => $this->document($body, null, $refused),
                 'is_internal' => $staff,
             ], $user);
 
             $comment->forceFill(['source' => 'email'])->save();
+
+            // On the comment, not the issue: a file sent with a staff reply is as
+            // internal as the reply it came with.
+            foreach ($files as $file) {
+                AttachmentStore::store($file, $comment, $issue, $user);
+            }
 
             return $issue;
         });
@@ -142,8 +164,39 @@ class InboundMailController extends Controller
             : response()->json(['issue' => $result->key], 200);
     }
 
+    /**
+     * The files Mailgun sent with the message, as attachment-1 … attachment-n, split
+     * into those that will be kept and a line for each that will not.
+     *
+     * @return array{0: list<UploadedFile>, 1: list<string>}
+     */
+    private function attachments(Request $request): array
+    {
+        $files = [];
+        $refused = [];
+
+        foreach ($request->allFiles() as $field => $file) {
+            if (! preg_match('/^attachment-\d+$/', (string) $field) || ! $file instanceof UploadedFile) {
+                continue;
+            }
+
+            $name = AttachmentStore::safeName($file->getClientOriginalName());
+            $reason = count($files) >= self::MAX_FILES
+                ? 'only the first '.self::MAX_FILES.' files of a message are kept'
+                : AttachmentStore::refusal($file);
+
+            if ($reason === null) {
+                $files[] = $file;
+            } else {
+                $refused[] = "{$name}: {$reason}";
+            }
+        }
+
+        return [$files, $refused];
+    }
+
     /** @return array<string, mixed> */
-    private function document(string $body, ?string $from): array
+    private function document(string $body, ?string $from, array $refused = []): array
     {
         $paragraphs = array_map(
             fn (string $chunk) => [
@@ -157,6 +210,14 @@ class InboundMailController extends Controller
             $paragraphs[] = [
                 'type' => 'paragraph',
                 'content' => [['type' => 'text', 'text' => 'Received by email from '.$from.'.']],
+            ];
+        }
+
+        // Said in the text, so a file that never arrived is not simply missing.
+        if ($refused !== []) {
+            $paragraphs[] = [
+                'type' => 'paragraph',
+                'content' => [['type' => 'text', 'text' => 'Not attached: '.implode('; ', $refused).'.']],
             ];
         }
 

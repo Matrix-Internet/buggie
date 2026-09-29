@@ -49,6 +49,7 @@ use App\Http\Controllers\TimeOffController;
 use App\Http\Controllers\TimerController;
 use App\Http\Controllers\TimeReportController;
 use App\Http\Controllers\TwoFactorController;
+use App\Http\Controllers\UnsubscribeController;
 use App\Http\Controllers\VersionController;
 use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\WidgetKeyController;
@@ -80,6 +81,17 @@ Route::domain($host)->group(function () {
     Route::get('portal/{token}', [PortalController::class, 'show'])->name('portal.show');
     Route::post('portal/{token}/comment', [PortalController::class, 'comment'])
         ->name('portal.comment');
+
+    // The link at the foot of every notification email. Signed, never expiring, and
+    // outside every guard: see UnsubscribeController.
+    Route::get('unsubscribe/{user}', [UnsubscribeController::class, 'show'])
+        ->whereNumber('user')
+        ->middleware('signed')
+        ->name('unsubscribe');
+    Route::post('unsubscribe/{user}', [UnsubscribeController::class, 'store'])
+        ->whereNumber('user')
+        ->middleware(['signed', 'throttle:20,1'])
+        ->name('unsubscribe.store');
 
     // The widget bundle, embedded cross-origin in customers' applications.
     // The parameter must be constrained: the default [^/]+ is greedy and swallows

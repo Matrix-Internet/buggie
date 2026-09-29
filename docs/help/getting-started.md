@@ -115,7 +115,9 @@ against the central domain. A few deliberate behaviours:
 - Requests are rate limited to five per fifteen minutes for a given address, on top
   of the framework's own one-minute gap between links.
 
-There is no "your password was changed" notification.
+Whenever your password changes, however it was changed, an email goes to your address
+saying so, with a link to reset it. If somebody else changed it, that is how you find
+out, and the reset link still reaches you.
 
 ## Deleting a workspace
 

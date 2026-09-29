@@ -40,6 +40,7 @@ class Workspace extends Model
         return [
             'settings' => 'array',
             'trial_ends_at' => 'datetime',
+            'payment_failed_at' => 'datetime',
         ];
     }
 
@@ -110,7 +111,7 @@ class Workspace extends Model
 
         $subscription = $this->subscription();
 
-        if ($subscription && $subscription->valid() && ! $subscription->onTrial()) {
+        if ($subscription && $subscription->valid() && ! $subscription->onTrial() && ! $this->pastGrace($subscription)) {
             $plan = Plan::forPriceId((string) $subscription->stripe_price);
 
             if ($plan !== null) {
@@ -123,6 +124,20 @@ class Workspace extends Model
         }
 
         return Plan::find(config('plans.default'));
+    }
+
+    /**
+     * Whether a declined payment has gone unpaid for longer than the grace period.
+     *
+     * A past-due subscription keeps its plan while Stripe retries the card (see
+     * PaymentFailures), but not indefinitely: Stripe can be set to leave an unpaid
+     * subscription past due for ever, and the plan must not outlast the payments.
+     */
+    public function pastGrace(\Laravel\Cashier\Subscription $subscription): bool
+    {
+        return $subscription->pastDue()
+            && $this->payment_failed_at !== null
+            && $this->payment_failed_at->lt(now()->subDays((int) config('plans.past_due_grace_days', 14)));
     }
 
     /** Reports this calendar month — the metered quantity. */

@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Enums\NotificationReason;
+use App\Http\Controllers\UnsubscribeController;
 use App\Models\Issue;
 use App\Models\PendingNotification;
 use App\Models\User;
@@ -13,6 +14,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Collection;
+use Symfony\Component\Mime\Email;
 
 /**
  * Everything that happened to one issue, for one person, since the last send.
@@ -30,7 +32,10 @@ class IssueDigest extends Notification
     /** @return array<int, string> */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        // Somebody who unsubscribed still has the in-app list; only the email stops.
+        return $notifiable instanceof User && ! $notifiable->wantsEmail()
+            ? ['database']
+            : ['mail', 'database'];
     }
 
     public function toMail(object $notifiable): MailMessage
@@ -47,9 +52,18 @@ class IssueDigest extends Notification
             $mail->line($line);
         }
 
+        $unsubscribe = UnsubscribeController::url($notifiable, $this->issue);
+
         return $mail
             ->action('Open issue', workspace_url($this->issue->workspace->slug, 'issues/'.$this->issue->key))
-            ->line('Reply to this email to comment on the issue.');
+            ->line('Reply to this email to comment on the issue.')
+            ->line("Too much email? [Stop watching this issue, or unsubscribe]({$unsubscribe}).")
+            // What mail clients turn into their own unsubscribe button, and what Gmail
+            // and Yahoo require of anyone sending in volume. One click means all email.
+            ->withSymfonyMessage(function (Email $message) use ($unsubscribe) {
+                $message->getHeaders()->addTextHeader('List-Unsubscribe', "<{$unsubscribe}>");
+                $message->getHeaders()->addTextHeader('List-Unsubscribe-Post', 'List-Unsubscribe=One-Click');
+            });
     }
 
     /** @return array<string, mixed> */

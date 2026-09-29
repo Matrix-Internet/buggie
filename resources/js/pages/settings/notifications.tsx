@@ -10,8 +10,16 @@ interface Reason {
     enabled: boolean;
 }
 
-export default function NotificationPreferences({ reasons }: { reasons: Reason[] }) {
+export default function NotificationPreferences({
+    reasons,
+    email = true,
+}: {
+    reasons: Reason[];
+    /** Off after an unsubscribe: nothing is emailed, the in-app list still fills. */
+    email?: boolean;
+}) {
     const { data, setData, patch, processing } = useForm({
+        email,
         reasons: Object.fromEntries(reasons.map((r) => [r.value, r.enabled])) as Record<
             string,
             boolean
@@ -38,6 +46,23 @@ export default function NotificationPreferences({ reasons }: { reasons: Reason[]
             </p>
 
             <form onSubmit={submit} className="mt-6 max-w-2xl">
+                <label className="mb-4 flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-raised px-4 py-3">
+                    <input
+                        type="checkbox"
+                        checked={data.email}
+                        onChange={(e) => setData('email', e.target.checked)}
+                        className="mt-0.5"
+                    />
+                    <span className="min-w-0">
+                        <span className="block text-sm text-ink">Email me</span>
+                        <span className="text-xs text-ink-subtle">
+                            {data.email
+                                ? 'The ticked kinds below are emailed to you, a few minutes after things go quiet.'
+                                : 'Nothing is emailed. The ticked kinds below still appear in your Notifications list.'}
+                        </span>
+                    </span>
+                </label>
+
                 <ul className="divide-y divide-border rounded-xl border border-border bg-raised">
                     {reasons.map((reason) => (
                         <li key={reason.value}>

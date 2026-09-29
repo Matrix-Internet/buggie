@@ -315,7 +315,7 @@ export default function EditProject({
                 <h2 className="text-sm font-semibold text-ink">File issues by email</h2>
                 <p className="mt-1 text-sm text-ink-muted">
                     Anything sent here becomes an issue in this project. The subject is the
-                    title, the body is the description. Give it
+                    title, the body is the description, and attached files come across. Give it
                     to a client who would rather email than sign in.
                 </p>
 

@@ -32,6 +32,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // are spared; a plain string field called body is still trimmed.
         $middleware->trimStrings(except: ['body.*', 'description.*']);
 
+        // A mail client's one-click unsubscribe (RFC 8058) posts with no session and
+        // no token. The signed URL is the credential.
+        $middleware->validateCsrfTokens(except: ['unsubscribe/*']);
+
         // Runs on every web request: binds the tenant and turns on strict mode,
         // so a tenant query with no workspace resolved throws instead of leaking.
         $middleware->web(append: [

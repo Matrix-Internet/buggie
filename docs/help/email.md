@@ -77,8 +77,13 @@ Malformed addresses, unknown project tokens and unknown issue keys are answered 
 `200`, not an error. Mailgun retries failures, and these will never succeed however
 many times they are tried.
 
-Inbound attachments are discarded: Mailgun sends them, and Buggie does not yet turn
-them into issue attachments.
+Files sent with the message are attached: to the new issue for a message to a project
+address, and to the comment for a reply, so a file sent with a staff reply is as
+internal as the reply. They go through the same rules as an upload on the issue page —
+images, PDFs, text, CSV, JSON and zip, up to 10MB each, judged by what the file
+actually contains rather than its name, and never SVG. At most ten files are kept per
+message. Anything refused is named at the end of the text, with the reason, so a file
+that did not come across is not simply missing.
 
 ## Outgoing mail
 
@@ -111,7 +116,9 @@ The banner watches the configuration, not individual sends: it appears for the `
 `array` and `null` drivers, and for SMTP with no server set. Any other provider is
 taken at its word.
 
-There is no unsubscribe link in digest mail, and bounces are not handled.
+Every digest carries an unsubscribe link and the `List-Unsubscribe` headers mail
+clients turn into their own button; see
+[Turning them off](notifications.md#turning-them-off). Bounces are not handled.
 
 ## Related pages
 

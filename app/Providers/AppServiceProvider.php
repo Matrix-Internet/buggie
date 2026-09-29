@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\ApiToken;
 use App\Models\Workspace;
+use App\Support\Billing\PaymentFailures;
 use App\Support\Settings\MailConfiguration;
 use App\Support\Settings\Settings;
 use App\Support\Tenancy\Tenancy;
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Cashier\Cashier;
+use Laravel\Cashier\Events\WebhookReceived;
 use Laravel\Sanctum\Sanctum;
 
 class AppServiceProvider extends ServiceProvider
@@ -56,6 +58,13 @@ class AppServiceProvider extends ServiceProvider
         // only one of them may be subscribed.
         Cashier::useCustomerModel(Workspace::class);
         Cashier::calculateTaxes();
+
+        // A declined card makes a subscription past due while Stripe retries it.
+        // Cashier's default treats that as not active, which dropped a paying
+        // workspace to the free plan at the first decline, unannounced. It stays
+        // active; Workspace::pastGrace() puts the limit on it.
+        Cashier::keepPastDueSubscriptionsActive();
+        Event::listen(WebhookReceived::class, PaymentFailures::class);
 
         // Built explicitly rather than by route(): the notification may be sent from
         // a queued job with no request behind it, and workspaces live on subdomains,

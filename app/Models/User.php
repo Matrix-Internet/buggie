@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\NotificationReason;
 use App\Enums\WorkspaceRole;
 use App\Models\Concerns\HasTwoFactorAuthentication;
+use App\Notifications\PasswordChanged;
 use App\Notifications\VerifyEmailAddress;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -45,6 +46,18 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $attributes = [
         'is_operator' => false,
     ];
+
+    protected static function booted(): void
+    {
+        // On the model, not in the reset controller: every way a password can change
+        // — a reset, an operator command, a settings screen yet to be written — has
+        // to tell the owner, and only this line sees them all.
+        static::updated(function (User $user) {
+            if ($user->wasChanged('password')) {
+                $user->notify(new PasswordChanged);
+            }
+        });
+    }
 
     protected function casts(): array
     {
@@ -100,6 +113,15 @@ class User extends Authenticatable implements MustVerifyEmail
     public function wantsNotification(NotificationReason $reason): bool
     {
         return (bool) ($this->notification_settings[$reason->value] ?? $reason->defaultEnabled());
+    }
+
+    /**
+     * Whether digests are emailed at all. Off, the in-app list still fills: it is
+     * the email that somebody unsubscribed from, not the record of their work.
+     */
+    public function wantsEmail(): bool
+    {
+        return (bool) ($this->notification_settings['email'] ?? true);
     }
 
     /**

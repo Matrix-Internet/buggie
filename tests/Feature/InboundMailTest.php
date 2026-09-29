@@ -11,6 +11,8 @@ use App\Models\User;
 use App\Support\Mail\ReplyAddress;
 use App\Support\Tenancy\Tenancy;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -279,5 +281,71 @@ class InboundMailTest extends TestCase
         $this->assertNotSame($a->inbound_token, $b->inbound_token);
         $this->assertStringNotContainsString('web', $a->inbound_token);
         $this->assertSame(16, strlen($a->inbound_token));
+    }
+
+    #[Test]
+    public function files_sent_with_an_emailed_issue_are_attached_and_refused_ones_named(): void
+    {
+        Storage::fake('local');
+        [$workspace] = $this->workspaceWithMember(slug: 'acme');
+        $project = app(Tenancy::class)->run($workspace, fn () => Project::factory()->create(['key' => 'WEB']));
+
+        $this->post('/api/mail/inbound', $this->signed([
+            'recipient' => "bugs+{$project->inbound_token}@in.buggie.test",
+            'subject' => 'Checkout is broken',
+            'stripped-text' => 'Screenshot attached.',
+            'attachment-count' => 2,
+            'attachment-1' => UploadedFile::fake()->image('checkout.png', 40, 30),
+            // Named as an image, but it is XML that can carry script. A real file,
+            // not a fake: fakes report their type from the name, and the point is
+            // that the content decides.
+            'attachment-2' => $this->realUpload(
+                'logo.png',
+                '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>',
+            ),
+        ]))->assertOk();
+
+        [$issue, $attachments] = app(Tenancy::class)->run($workspace, function () {
+            $issue = Issue::firstOrFail();
+
+            return [$issue, $issue->attachments()->get()];
+        });
+
+        $this->assertSame(['checkout.png'], $attachments->pluck('filename')->all());
+        $this->assertSame('image/png', $attachments->first()->mime);
+        Storage::disk('local')->assertExists($attachments->first()->path);
+
+        $this->assertStringContainsString('Not attached: logo.png: that type of file is not accepted.', $issue->description_text);
+    }
+
+    #[Test]
+    public function a_file_sent_with_a_staff_reply_is_as_internal_as_the_reply(): void
+    {
+        Storage::fake('local');
+        [$workspace, $staff] = $this->workspaceWithMember(WorkspaceRole::Member, 'acme');
+
+        $issue = app(Tenancy::class)->run($workspace, fn () => Issue::factory()->create([
+            'project_id' => Project::factory()->create(['key' => 'WEB'])->id,
+        ]));
+
+        $this->post('/api/mail/inbound', $this->signed([
+            'recipient' => ReplyAddress::for($issue, $staff),
+            'stripped-text' => 'Here is the log.',
+            'attachment-1' => UploadedFile::fake()->createWithContent('log.txt', "ERROR payment adapter\n"),
+        ]))->assertOk();
+
+        $comment = app(Tenancy::class)->run($workspace, fn () => Comment::with('attachments')->firstOrFail());
+
+        $this->assertTrue($comment->is_internal);
+        $this->assertSame(['log.txt'], $comment->attachments->pluck('filename')->all());
+        $this->assertSame($staff->id, $comment->attachments->first()->uploaded_by_id);
+    }
+
+    private function realUpload(string $name, string $content): UploadedFile
+    {
+        $path = tempnam(sys_get_temp_dir(), 'mail');
+        file_put_contents($path, $content);
+
+        return new UploadedFile($path, $name, 'image/png', null, true);
     }
 }

@@ -247,4 +247,19 @@ class PasswordResetTest extends TestCase
 
         unset($workspace);
     }
+
+    #[Test]
+    public function the_owner_is_told_when_their_password_changes_and_only_then(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->create(['password' => 'the-old-password']);
+
+        // Anything else about the account changing is not news.
+        $user->update(['name' => 'Someone Else']);
+        Notification::assertNotSentTo($user, \App\Notifications\PasswordChanged::class);
+
+        $user->update(['password' => 'a-brand-new-password']);
+        Notification::assertSentToTimes($user, \App\Notifications\PasswordChanged::class, 1);
+    }
 }

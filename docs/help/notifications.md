@@ -209,8 +209,8 @@ See [The issue query language](query-language.md).
 
 ## What is not here
 
-There is no bell in the top bar — the list is a page, reached from the sidebar. There
-is no unsubscribe link in digest mail, and no realtime "Ann is viewing" presence.
+There is no bell in the top bar — the list is a page, reached from the sidebar — and no
+realtime "Ann is viewing" presence.
 
 ## Related pages
 
@@ -225,8 +225,20 @@ switch, and everything is on until you turn it off — a tracker nobody hears fr
 tracker nobody uses.
 
 A switch covers both the email and the list. There is deliberately no way to keep one
-and drop the other: two switches per reason is twelve switches, and nobody has ever
-wanted to be told about comments only in the place they were not looking.
+and drop the other per reason: two switches per reason is eighteen switches. There is
+one switch above them all, **Email me**: off, nothing is emailed and the ticked kinds
+still fill the list.
+
+### Unsubscribing from an email
+
+Every digest ends with a link that works without signing in. It opens a page offering
+two things — **stop watching this issue**, or **stop all notification email** — and
+changes nothing until you choose, because mail scanners open every link in a message.
+Stopping all email is the same as switching **Email me** off, and it is switched back
+on the same way.
+
+Digests also carry `List-Unsubscribe` headers, which Gmail, Outlook and Apple Mail
+show as their own unsubscribe button. That button stops all notification email.
 
 The preferences belong to you, not to a workspace. Somebody invited to four client
 workspaces should not have to switch the same thing off four times, so changing them

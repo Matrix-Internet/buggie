@@ -104,10 +104,18 @@ rendered from configuration on the server. The term is sent with the button you 
 rather than read from the session, so what you are charged is what the card you
 clicked said.
 
+## When a payment fails
+
+If a card is declined, the workspace owner is emailed straight away and again at each
+of Stripe's retries, with the amount, when the next attempt will be, and a link to
+update the card. Staff see a banner in the app until it is paid.
+
+Nothing is taken away meanwhile. The workspace keeps its plan for 14 days from the
+first decline; if nothing has been paid by then it moves to the free plan, keeping
+all its projects, issues and reports. The first successful payment clears all of it.
+
 ## Known rough edges
 
-- There is no dunning: a failed payment downgrades entitlements at the next webhook
-  with no warning email.
 - There is no usage export or invoice history beyond Stripe's own portal.
 
 ## Related pages

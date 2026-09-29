@@ -12,6 +12,19 @@ today you are running `main`, which is honest rather than ideal — see
 
 ### Added
 
+- **Unsubscribing.** Every notification email has an unsubscribe link and the
+  one-click `List-Unsubscribe` headers Gmail and Yahoo expect. The page it opens can
+  stop one issue or all email, and changes nothing until you choose. Notification
+  settings gain an **Email me** switch; with it off the in-app list still fills.
+- **Failed payments are handled.** The owner is emailed at every declined attempt and
+  staff see a banner. The plan is kept for 14 days from the first decline
+  (`BUGGIE_PAST_DUE_GRACE_DAYS`) instead of being dropped at once, and a successful
+  payment clears it. Stripe's webhook needs `invoice.payment_failed` added; see
+  `docs/DEPLOYMENT.md`.
+- **"Your password was changed" email**, sent whenever the password changes by any
+  route, with a link to reset it.
+- **Files emailed in are attached** to the new issue, or to the comment for a reply,
+  under the same rules as an upload. Refused files are named in the text.
 - **@mentions.** Type `@` in a comment or description to pick a colleague — or, in a
   public comment, a client the issue is shared with. They become a watcher and are
   notified. The server decides who may be mentioned and what the mention says, and a

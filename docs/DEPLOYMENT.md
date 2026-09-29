@@ -82,9 +82,18 @@ displayed amounts are cosmetic and the real number is whatever the Stripe price 
 ## Stripe
 
 1. Create the products and prices, and put the price ids in the environment.
-2. Point a webhook at `/stripe/webhook` for the subscription events — Cashier registers
-   the route and handles them.
+2. Point a webhook at `/stripe/webhook` — Cashier registers the route. Subscribe it to
+   `customer.subscription.created`, `customer.subscription.updated`,
+   `customer.subscription.deleted`, `customer.updated`, `customer.deleted`,
+   `payment_method.automatically_updated`, `invoice.payment_action_required`,
+   `invoice.payment_succeeded` **and `invoice.payment_failed`**. The last is not in
+   Cashier's default set (`php artisan cashier:webhook`), and without it nobody is told
+   a card was declined: see `PaymentFailures`.
 3. Set `STRIPE_WEBHOOK_SECRET`.
+4. Under Billing → Revenue recovery, set what Stripe does when every retry fails to
+   **cancel the subscription**. A declined workspace keeps its plan for
+   `BUGGIE_PAST_DUE_GRACE_DAYS` (default 14) after the first decline either way, but a
+   subscription Stripe leaves past due for ever would otherwise stay on the books.
 
 Subscription state is read from the local `subscriptions` table, never from Stripe at
 request time, so webhook delivery is what keeps entitlements correct. If webhooks stop,

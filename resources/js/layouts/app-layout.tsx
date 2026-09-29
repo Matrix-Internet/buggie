@@ -509,6 +509,24 @@ function UsageBanner({ billing }: { billing: SharedProps['billing'] }) {
     const approaching = Object.entries(billing.usage).find(([, row]) => row.near && !row.over);
     const trialEnding = billing.on_trial && billing.trial_days_left <= 3;
 
+    // Before anything else: the only one of these that ends with losing the plan.
+    if (billing.payment_failed) {
+        return (
+            <div className="mb-6 flex flex-wrap items-center gap-2 rounded-lg border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
+                <span>
+                    {billing.can_manage
+                        ? 'Your last payment failed. Update your payment details to keep your plan.'
+                        : "This workspace's last payment failed. The owner has been emailed."}
+                </span>
+                {billing.can_manage && (
+                    <Link href="/settings/billing" className="ml-auto font-medium underline underline-offset-2">
+                        Update payment details
+                    </Link>
+                )}
+            </div>
+        );
+    }
+
     if (!breached && !approaching && !trialEnding) return null;
 
     const message = breached

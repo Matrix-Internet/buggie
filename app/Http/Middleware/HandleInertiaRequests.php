@@ -129,6 +129,8 @@ class HandleInertiaRequests extends Middleware
                         ? (int) ceil(now()->diffInDays($workspace->trial_ends_at, false))
                         : 0,
                     'can_manage' => $user->can('manageBilling', $workspace),
+                    // A declined payment still being retried; the plan is kept meanwhile.
+                    'payment_failed' => $workspace->payment_failed_at !== null,
                 ]
                 : null,
 

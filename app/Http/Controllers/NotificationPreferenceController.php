@@ -31,6 +31,7 @@ class NotificationPreferenceController extends Controller
                 'description' => $reason->description(),
                 'enabled' => $user->wantsNotification($reason),
             ], NotificationReason::cases()),
+            'email' => $user->wantsEmail(),
         ]);
     }
 
@@ -41,11 +42,14 @@ class NotificationPreferenceController extends Controller
         $validated = $request->validate([
             'reasons' => ['present', 'array'],
             'reasons.*' => ['boolean'],
+            'email' => ['sometimes', 'boolean'],
         ]);
 
         // Rebuilt from the enum rather than stored as sent, so a stale key from an
         // old form — or an invented one — cannot end up in the column.
-        $settings = [];
+        // Not a reason: whether any of them is emailed. Kept as it was when the form
+        // does not say, and switched back on here after an unsubscribe.
+        $settings = ['email' => (bool) ($validated['email'] ?? $request->user()->wantsEmail())];
 
         foreach ($values as $value) {
             $settings[$value] = (bool) ($validated['reasons'][$value] ?? false);

@@ -23,6 +23,10 @@ return [
     // What a workspace gets during its trial, before anyone has paid anything.
     'trial' => 'studio',
 
+    // How long a workspace keeps its plan after a payment is declined, while Stripe
+    // retries the card. Measured from the first decline.
+    'past_due_grace_days' => (int) env('BUGGIE_PAST_DUE_GRACE_DAYS', 14),
+
     // Warn in-app once usage passes this fraction of the monthly allowance.
     'warn_at' => 0.8,
 
