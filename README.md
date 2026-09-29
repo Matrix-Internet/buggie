@@ -15,7 +15,8 @@ signed-in user at the moment someone clicks *report a bug*.
 <script src="https://your-buggie/w/pk_live_9f3a2b.js" async></script>
 ```
 
-That's the whole install. ~7KB gzipped.
+That's the whole install. About 9KB gzipped; the screenshot library loads only when
+somebody opens the reporter.
 
 By default that puts a floating "Report a bug" button in front of **every** visitor,
 which is right for a public beta and wrong for most client work. Two attributes change
@@ -52,7 +53,8 @@ import { init } from '@buggie/widget';
 init({ key: 'pk_live_9f3a2b', endpoint: 'https://your-buggie' });
 ```
 
-See [`packages/widget`](packages/widget).
+It is not on npm yet: until it is, `npm pack` it from [`packages/widget`](packages/widget),
+whose README has the two commands.
 
 iOS apps have a Swift package that posts to the same endpoint:
 
@@ -149,15 +151,18 @@ reporting is off unless you set a Sentry DSN yourself.
 Requires Docker and a wildcard DNS record, because workspaces live on subdomains.
 
 ```sh
-git clone https://github.com/you/buggie && cd buggie
+git clone https://github.com/bpowerie25/buggie && cd buggie
 cp .env.selfhost.example .env          # set APP_URL, APP_DOMAIN and DB_PASSWORD
 
-docker compose -f docker-compose.selfhost.yml build
+docker compose -f docker-compose.selfhost.yml pull    # or `build`, from source
 docker compose -f docker-compose.selfhost.yml run --rm \
     --entrypoint php app artisan key:generate --show    # paste into .env
 
 docker compose -f docker-compose.selfhost.yml up -d
 ```
+
+`pull` runs the published image of the latest release; `build` makes it from your
+checkout, and is the one to use until the first release is tagged.
 
 Then open your domain and create a workspace. One container runs the web server,
 queue worker and scheduler; Postgres and Redis are the only dependencies.

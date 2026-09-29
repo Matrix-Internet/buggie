@@ -25,7 +25,7 @@ both. Around 1 GB of RAM is enough for a small team.
 ## Install
 
 ```sh
-git clone https://github.com/you/buggie && cd buggie
+git clone https://github.com/bpowerie25/buggie && cd buggie
 cp .env.selfhost.example .env
 ```
 
@@ -33,7 +33,7 @@ Set at least `APP_URL`, `APP_DOMAIN`, `SESSION_DOMAIN`, `DB_PASSWORD` and the `M
 values, then:
 
 ```sh
-docker compose -f docker-compose.selfhost.yml build
+docker compose -f docker-compose.selfhost.yml pull    # or `build`, from source
 
 docker compose -f docker-compose.selfhost.yml run --rm \
     --entrypoint php app artisan key:generate --show
@@ -41,6 +41,10 @@ docker compose -f docker-compose.selfhost.yml run --rm \
 
 docker compose -f docker-compose.selfhost.yml up -d
 ```
+
+`pull` fetches the published image of the latest release (pin one with
+`BUGGIE_VERSION` in `.env`); `build` makes it from your checkout instead, which is the
+only option until the first release is tagged.
 
 Migrations run automatically on start. Open your domain and register: the first
 account on an empty install is allowed whatever else is set, runs the install, and

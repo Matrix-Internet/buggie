@@ -19,7 +19,7 @@ Roughly 1GB of RAM is enough for a small team.
 ## Install
 
 ```sh
-git clone https://github.com/you/buggie && cd buggie
+git clone https://github.com/bpowerie25/buggie && cd buggie
 cp .env.selfhost.example .env
 ```
 
@@ -36,7 +36,7 @@ Edit `.env` and set at least:
 Then:
 
 ```sh
-docker compose -f docker-compose.selfhost.yml build
+docker compose -f docker-compose.selfhost.yml pull    # or `build`, from source
 
 docker compose -f docker-compose.selfhost.yml run --rm \
     --entrypoint php app artisan key:generate --show
@@ -44,6 +44,12 @@ docker compose -f docker-compose.selfhost.yml run --rm \
 
 docker compose -f docker-compose.selfhost.yml up -d
 ```
+
+`pull` fetches the published image for the latest release; set `BUGGIE_VERSION` in
+`.env` (say `0.1.0`) to pin one, so upgrading is something you choose rather than
+something `pull` does. `build` makes the same image from your checkout instead —
+for unreleased code or your own changes, and the only option until the first release
+is tagged.
 
 Migrations run automatically on start. Then open your domain and register: on an
 install with no accounts, the first registration is allowed whatever else is set, and
@@ -196,13 +202,18 @@ pending jobs; it is not worth backing up.
 
 ## Upgrading
 
+Take a database backup first. Then, running the published image:
+
 ```sh
-git pull
-docker compose -f docker-compose.selfhost.yml build
+git pull                                  # the compose file and docs, for the new version
+# set BUGGIE_VERSION in .env to the new version, if you pinned one
+docker compose -f docker-compose.selfhost.yml pull
 docker compose -f docker-compose.selfhost.yml up -d
 ```
 
-Migrations run on start. Take a database backup first.
+Or from source, `build` instead of `pull`. Migrations run on start. Each release's
+notes, and the [changelog](../CHANGELOG.md), say if an upgrade needs anything more.
+Releases are listed at <https://github.com/bpowerie25/buggie/releases>.
 
 ### Open sign-up is closed by default
 

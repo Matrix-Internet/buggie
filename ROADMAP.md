@@ -15,19 +15,22 @@ Roughly in the order they are likely to happen.
   point people that is not an account.
 - **Realtime updates.** Two people triaging the same inbox currently overwrite each
   other's sense of what is left.
-- **`@mention` autocomplete.** Mentions work; finding the name does not.
-- **Undo for bulk edits.** Changing forty issues is one click and no way back.
+- **Undo for every bulk edit.** A bulk status change can be undone for a few seconds;
+  assignee, priority and the rest cannot.
+- **GitHub and GitLab.** "Fixes WEB-12" in a commit closing the issue, and the pull
+  request shown on it.
 - **A cumulative flow diagram.** Kanban's actual diagnostic — where work piles up. The
   backlog-over-time data already exists on Insights, so this is a chart rather than new
   machinery.
 - **Internationalisation.** The widget strings matter more than the application's: an
   agency's client's users are the ones reading them.
-- **Email verification on sign-up.**
 - **Joining by email domain.** A workspace could name a domain — anybody with an
-  `@kennco.ie` address joins the Kennco workspace without waiting for approval. It
-  needs email verification first, since without it the domain is only a claim, which is
-  why it waits behind the item above. Until then, *Request access* covers it with a
-  person in the loop.
+  `@kennco.ie` address joins the Kennco workspace without waiting for approval. Email
+  verification, which it depends on, now exists. Until then, *Request access* covers
+  it with a person in the loop.
+- **Published SDKs and releases.** `@buggie/widget` on npm, the Android SDK on Maven
+  Central, a `buggie-swift` repository for Swift Package Manager, and tagged releases
+  with a published Docker image.
 
 ## Not planned
 

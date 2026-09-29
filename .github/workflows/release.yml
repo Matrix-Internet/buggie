@@ -1,0 +1,86 @@
+name: Release
+
+# Pushing a tag like v0.1.0 publishes that version:
+#
+#   git tag -a v0.1.0 -m "Buggie 0.1.0" && git push origin v0.1.0
+#
+# The image is what docker-compose.selfhost.yml runs, so a self-hoster upgrades with
+# `docker compose pull` instead of building on their own server.
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write   # the GitHub release
+  packages: write   # the image on ghcr.io
+
+jobs:
+  checks:
+    name: Checks
+    # The same suite as every push to main, including booting the self-host image.
+    # Nothing is published unless all of it passes.
+    uses: ./.github/workflows/ci.yml
+
+  image:
+    name: Publish image
+    needs: checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # arm64 as well as amd64: small ARM servers are a common place to self-host.
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tags and labels
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          # 0.1.0, 0.1 and latest. A pre-release tag (v0.2.0-rc.1) gets its own tag
+          # and never moves latest.
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+          flavor: |
+            latest=auto
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/php/Dockerfile.production
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  release:
+    name: GitHub release
+    needs: image
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # The CHANGELOG is where the reasons live; the release links to it rather than
+        # duplicating it, and GitHub lists the commits since the previous tag.
+        run: |
+          prerelease=""
+          [[ "$GITHUB_REF_NAME" == *-* ]] && prerelease="--prerelease"
+          gh release create "$GITHUB_REF_NAME" $prerelease \
+            --title "Buggie ${GITHUB_REF_NAME#v}" \
+            --generate-notes \
+            --notes "Image: \`ghcr.io/${GITHUB_REPOSITORY}:${GITHUB_REF_NAME#v}\`. What changed and why: [CHANGELOG.md](https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_REF_NAME}/CHANGELOG.md)."

@@ -1,10 +1,14 @@
 # Self-hosting Buggie.
 #
 #   cp .env.selfhost.example .env
-#   docker compose -f docker-compose.selfhost.yml build
+#   docker compose -f docker-compose.selfhost.yml pull      # or `build`, from source
 #   docker compose -f docker-compose.selfhost.yml run --rm \
 #       --entrypoint php app artisan key:generate --show   # paste into .env
 #   docker compose -f docker-compose.selfhost.yml up -d
+#
+# `pull` fetches the published image for BUGGIE_VERSION (default: latest release).
+# `build` makes the same image from this checkout instead, for running unreleased
+# code or changes of your own.
 #
 # Then open http://localhost:8080 and create your workspace.
 #
@@ -16,10 +20,12 @@
 
 services:
   app:
+    # Published by .github/workflows/release.yml for every tagged version. Pin a
+    # version in .env (BUGGIE_VERSION=0.1.0) so an upgrade is something you choose.
+    image: ${BUGGIE_IMAGE:-ghcr.io/bpowerie25/buggie}:${BUGGIE_VERSION:-latest}
     build:
       context: .
       dockerfile: docker/php/Dockerfile.production
-    image: buggie:latest
     restart: unless-stopped
     ports:
       - "${APP_PORT:-8080}:80"

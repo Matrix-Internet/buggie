@@ -8,18 +8,21 @@ Requires iOS 15. AGPL-3.0, like the rest of Buggie.
 
 ## Install
 
-Swift Package Manager, in Xcode via **File → Add Package Dependencies**, or:
+**Not published as its own repository yet.** Swift Package Manager only resolves a
+package whose `Package.swift` is at the root of a repository, and this one lives at
+`packages/swift` in the [main Buggie repository](https://github.com/bpowerie25/buggie).
+A `buggie-swift` mirror will fix that; until it exists, use it as a local package:
+
+1. Clone the Buggie repository.
+2. In Xcode, **File → Add Package Dependencies… → Add Local…**, and choose its
+   `packages/swift` folder.
+3. Add `Buggie` to your target's dependencies.
+
+Or from another package's `Package.swift`:
 
 ```swift
-.package(url: "https://github.com/bpowerie25/buggie-swift", from: "0.1.0")
+.package(path: "../buggie/packages/swift")
 ```
-
-Then add `Buggie` to your target's dependencies.
-
-The source of truth is `packages/swift` in the [main Buggie
-repository](https://github.com/bpowerie25/buggie); `buggie-swift` is a mirror of that
-directory. Swift Package Manager insists on finding `Package.swift` at the root of a
-repository, so a monorepo path is not something it will resolve.
 
 ## Use
 

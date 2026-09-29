@@ -10,6 +10,17 @@ on?".
 npm i @buggie/widget
 ```
 
+> **Not on npm yet.** Until it is, pack it from a checkout of the
+> [Buggie repository](https://github.com/bpowerie25/buggie) and install the tarball:
+>
+> ```sh
+> cd buggie/packages/widget && npm install && npm pack
+> cd your-app && npm i ../buggie/packages/widget/buggie-widget-0.1.0.tgz
+> ```
+>
+> The import stays `@buggie/widget`, so nothing in your code changes when it is
+> published. The plain `<script>` tag needs none of this.
+
 ```ts
 import { init } from '@buggie/widget';
 

@@ -1,0 +1,46 @@
+name: Bug
+description: Something in Buggie does not work as it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks. The more of what you saw arrives with the report, the less of it has to be
+        asked for later — which is the whole idea of this project.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to make it happen
+      description: The shortest route there. "It happens sometimes" is still worth saying.
+      placeholder: |
+        1. Open an issue shared with a client
+        2. …
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where
+      options:
+        - A self-hosted install
+        - The hosted service (buggie.eu)
+        - The reporter widget, in somebody's site
+        - The iOS or Android SDK
+        - Local development
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: A release such as 0.1.0, or the commit you are running (`git rev-parse --short HEAD`).
+  - type: textarea
+    id: context
+    attributes:
+      label: Anything else
+      description: Browser, logs (`storage/logs/laravel.log`), screenshots. Take out anything private first — this is public.

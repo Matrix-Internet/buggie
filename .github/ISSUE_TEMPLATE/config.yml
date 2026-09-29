@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: A security problem
+    url: https://github.com/bpowerie25/buggie/security/policy
+    about: Please do not open a public issue. Email security@buggie.eu — the policy says what happens next.
+  - name: The hosted service at buggie.eu
+    url: https://buggie.eu
+    about: Billing, your account or a workspace on buggie.eu. This tracker is for the open source code.

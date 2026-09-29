@@ -333,6 +333,10 @@ copy of the widget:
 npm i @buggie/widget
 ```
 
+It is not on npm yet. Until it is, `npm pack` in `packages/widget` of a checkout makes
+a tarball to install — see [its README](../../packages/widget/README.md). The script tag
+needs none of this.
+
 ```ts
 import { init } from '@buggie/widget';
 

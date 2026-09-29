@@ -6,6 +6,12 @@ settings. No server configuration differs: reports from a phone land in the same
 [triage inbox](triage.md), and two native reports of the same bug share a fingerprint
 and group exactly as browser reports do.
 
+**Neither is published yet** — not to Maven Central, and not as a Swift package
+repository of its own. Both are installed from a checkout of this repository for now:
+Android through Gradle's `includeBuild`, iOS as a local Swift package. The steps are in
+[`packages/kotlin`](../../packages/kotlin/README.md) and
+[`packages/swift`](../../packages/swift/README.md).
+
 Neither SDK ships a report sheet. What a bug report looks like inside somebody's
 application is their decision, and a sheet shipped here would be the first thing they
 had to fight. Each gives you a screen capture and a `report(…)` call; the interface is
@@ -79,8 +85,8 @@ of reports" (402) and "slow down" (429) call for different behaviour and neither
 the reporter's fault.
 
 Swift Package Manager insists on finding `Package.swift` at a repository root, so this
-cannot be consumed from `packages/swift` in the monorepo. It needs a `buggie-swift`
-mirror repository, which is why the install instructions name one.
+cannot be added by URL from `packages/swift` in the monorepo. It needs a `buggie-swift`
+mirror repository; until one exists, add it as a local package.
 
 **What is not verified:** the UIKit layer cannot be compiled without an iOS SDK, so it
 is syntax-checked rather than type-checked unless Xcode is present, and no report has

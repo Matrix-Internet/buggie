@@ -12,6 +12,14 @@ today you are running `main`, which is honest rather than ideal — see
 
 ### Added
 
+- **Releases publish an image.** Tagging `vX.Y.Z` runs the full suite, then publishes
+  `ghcr.io/bpowerie25/buggie` for amd64 and arm64 and creates a GitHub release. The
+  self-host compose file runs that image (`BUGGIE_VERSION` pins one), so upgrading is
+  `docker compose pull` rather than a build on your server. `build` still works.
+- **Honest install instructions for the SDKs.** None is published yet, and the docs had
+  said otherwise. Each README now says how to use it from a checkout: `npm pack` for
+  the widget loader, `includeBuild` for Android, a local package for iOS.
+- **Issue forms, a code of conduct and Dependabot** for the repository.
 - **Unsubscribing.** Every notification email has an unsubscribe link and the
   one-click `List-Unsubscribe` headers Gmail and Yahoo expect. The page it opens can
   stop one issue or all email, and changes nothing until you choose. Notification

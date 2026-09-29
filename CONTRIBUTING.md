@@ -96,3 +96,5 @@ right to the source of any modified version they are served.
 
 Typo fixes, comment corrections and documentation edits are taken at face value. Do
 not read the above as ceremony for a one-line spelling fix.
+
+Taking part means following the [code of conduct](CODE_OF_CONDUCT.md).

@@ -8,14 +8,25 @@ Requires Android 7 (API 24). AGPL-3.0, like the rest of Buggie.
 
 ## Install
 
+**Not published to Maven Central yet.** Until it is, build it from a checkout of the
+[main Buggie repository](https://github.com/bpowerie25/buggie), where `packages/kotlin`
+is the source. In your app's `settings.gradle.kts`:
+
+```kotlin
+includeBuild("../buggie/packages/kotlin")   // wherever you cloned it
+```
+
+and depend on it by the coordinates it will be published under, so nothing changes
+when it is:
+
 ```kotlin
 dependencies {
     implementation("eu.buggie:buggie-android:0.1.0")
 }
 ```
 
-The source of truth is `packages/kotlin` in the [main Buggie
-repository](https://github.com/bpowerie25/buggie).
+Gradle builds the SDK as part of your app and substitutes it for that dependency. The
+machine needs an Android SDK (`ANDROID_HOME`), which an Android app's machine has.
 
 The SDK has no dependencies of its own — not a JSON library, not a HTTP client, not
 coroutines. It is compiled into other people's applications, where every library we
