@@ -8,6 +8,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Stripe\Exception\ApiErrorException;
+use Stripe\Exception\InvalidRequestException;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class WorkspaceSettingsController extends Controller
@@ -157,10 +159,55 @@ class WorkspaceSettingsController extends Controller
             'confirm' => ['required', 'in:'.$workspace->slug],
         ], ['confirm.in' => 'Type the workspace address to confirm.']);
 
+        // Stop the billing first, and refuse to delete if Stripe will not confirm it:
+        // a workspace nobody can reach any more that still renews every month is the
+        // worst outcome available here, and a failed delete can simply be tried again.
+        if (! $this->cancelSubscriptions($workspace)) {
+            return back()->withErrors([
+                'confirm' => 'The subscription could not be cancelled, so nothing was deleted. '
+                    .'Please try again in a moment.',
+            ]);
+        }
+
         $workspace->delete();
 
         $request->session()->flash('success', 'Workspace deleted.');
 
         return redirect_across_domains(central_url('/'));
+    }
+
+    /**
+     * End every subscription that would otherwise renew, immediately rather than at
+     * the period's end: there is nothing left to use for the rest of the month.
+     *
+     * One already set to end at the period's end is left alone — it will not charge
+     * again. One Stripe no longer has is marked cancelled here to match.
+     */
+    private function cancelSubscriptions(Workspace $workspace): bool
+    {
+        $live = $workspace->subscriptions()
+            ->notCanceled()
+            ->whereNotIn('stripe_status', ['canceled', 'incomplete_expired'])
+            ->get();
+
+        foreach ($live as $subscription) {
+            try {
+                $subscription->cancelNow();
+            } catch (InvalidRequestException $e) {
+                if ($e->getStripeCode() !== 'resource_missing') {
+                    report($e);
+
+                    return false;
+                }
+
+                $subscription->markAsCanceled();
+            } catch (ApiErrorException $e) {
+                report($e);
+
+                return false;
+            }
+        }
+
+        return true;
     }
 }

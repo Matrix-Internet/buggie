@@ -117,6 +117,20 @@ against the central domain. A few deliberate behaviours:
 
 There is no "your password was changed" notification.
 
+## Deleting a workspace
+
+The owner can delete a workspace from the bottom of **Settings → Workspace**, by typing
+its address to confirm. Afterwards nobody can reach it, its projects, issues or
+reports, and its address cannot be reused.
+
+On the hosted service any subscription is cancelled with Stripe at the same moment,
+without waiting for the end of the billing period. If Stripe cannot be reached,
+nothing is deleted and you are asked to try again, so a workspace is never left gone
+but still billing.
+
+The data itself is kept rather than erased. To have it removed entirely, contact
+support (or, self-hosted, your operator).
+
 ## Where to go next
 
 - [Projects](projects.md) to make somewhere for issues to live.

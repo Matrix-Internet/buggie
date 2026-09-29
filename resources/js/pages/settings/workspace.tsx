@@ -93,6 +93,8 @@ export default function WorkspaceSettings({
         trust_unverified_emails: workspace.trust_unverified_emails,
     });
     const [confirm, setConfirm] = useState('');
+    // A refusal to delete comes back as a page error, not through the form above.
+    const deleteError = (usePage().props.errors as Record<string, string> | undefined)?.confirm;
 
     function submit(e: FormEvent) {
         e.preventDefault();
@@ -176,7 +178,8 @@ export default function WorkspaceSettings({
                 <section className="mt-12 max-w-lg rounded-xl border border-danger/30 bg-danger-soft p-4">
                     <h2 className="text-sm font-semibold text-ink">Delete this workspace</h2>
                     <p className="mt-1 text-sm text-ink-muted">
-                        Removes every project, issue and report, and cancels any subscription.
+                        Nobody can reach it or its projects, issues and reports afterwards, and
+                        any subscription is cancelled straight away.
                         Type <span className="font-mono text-ink">{workspace.slug}</span> to
                         confirm.
                     </p>
@@ -199,6 +202,7 @@ export default function WorkspaceSettings({
                             Delete
                         </Button>
                     </div>
+                    {deleteError && <p className="mt-2 text-sm text-danger">{deleteError}</p>}
                 </section>
             )}
         </AppLayout>
