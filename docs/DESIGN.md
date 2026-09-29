@@ -1692,3 +1692,43 @@ about what is shown.
 to someone who is shown the workspace name instead. Grouping by status would reveal the
 workflow the rest of the app keeps from clients. For the same reason, a client's rows
 carry no status colour or assignee id.
+
+---
+
+## 30. Linking reports to Sentry
+
+Buggie records the person's account of a bug and Sentry records the machine's, above
+all the exception on the server, which the widget can never see. Three ids join them:
+Sentry's last event, the trace and the replay. The widget reads them from the SDK
+already on the page, the server keeps them if they are well formed, and the links are
+built from the project's Sentry address when the page is drawn.
+
+**Ids only, and nothing server-side.** No OAuth, no stored Sentry token, no calls from
+our servers. A "create issue from Sentry" button and status sync would need all three,
+and are left until somebody asks twice. Sending Sentry alerts into the triage inbox is
+deliberately not built: Sentry already groups machine errors, and the inbox exists to
+keep noise out of the backlog.
+
+**The ids end up in an `href`.** They arrive from the anonymous ingest endpoint, so
+`SentryLinks::sanitize` keeps only 32-character hex strings and drops everything else,
+and the Sentry address must be http(s). The links are built at render time rather than
+stored, so setting or correcting the address fixes every earlier report.
+
+**The widget cannot import Sentry**, since that would put Sentry in every visitor's
+download. It reads `window.Sentry` (the CDN loader) or whatever the host hands to
+`setSentry()`, and treats every method as optional because SDK versions differ. The
+cost was 0.5KB gzipped.
+
+**A buffered replay is left out.** Under `replaysOnErrorSampleRate` the SDK has a
+replay id before anything has been uploaded, and linking it would open nothing.
+Flushing it would work, but that spends the customer's Sentry quota on their behalf,
+so the widget does not.
+
+**Sentry's URLs.** An event id searched on `/issues/?query=` opens that event, the trace
+is at `/performance/trace/{id}/` and the replay at `/replays/{id}/`, all relative to
+the organisation root. That root is `https://{org}.sentry.io` on sentry.io and
+`…/organizations/{org}` on a self-hosted Sentry, which is why the setting takes the
+whole address rather than an org slug.
+
+Not done: the iOS and Android SDKs send no Sentry ids yet. Sentry's Cocoa and Android
+SDKs expose the same three, so it is the same change on each.

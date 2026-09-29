@@ -63,6 +63,7 @@ what actually restrict.
 ```js
 window.buggie.identify({ id: 4821, email: 'ann@acme.com', name: 'Ann', plan: 'pro' });
 window.buggie.setRelease('2026.09.18-a1c3');
+window.buggie.setSentry(Sentry);   // only if Sentry is bundled; see below
 
 window.buggie.open();        // show the reporter
 window.buggie.close();       // hide it
@@ -94,9 +95,48 @@ window.buggie.q.push(['setRelease', '2026.09.18-a1c3']);
 | **Errors** | The most recent uncaught error or unhandled promise rejection, with its stack. Message trimmed to 2000 characters, stack to 8000. |
 | **Environment** | Page URL, referrer, page title, user agent, language, time zone, viewport size, screen size, device pixel ratio, release, and the capture time. |
 | **Identity** | Whatever `identify()` was given. |
+| **Sentry** | If the page runs Sentry: the ids of the last Sentry error, the current trace and the session replay. Ids only. See [Linking reports to Sentry](#linking-reports-to-sentry). |
 
 The buffers are installed the moment the script runs, because the interesting things
 happen well before anybody thinks to click "report a bug".
+
+## Linking reports to Sentry
+
+Buggie has the person's account of a bug. Sentry, if you run it, has the machine's —
+including the exception on your server, which a script in the browser can never see.
+The widget joins the two: when Sentry is on the page, each report carries
+
+- the id of the **last error** Sentry captured in that page,
+- the id of the **trace** the page is in, which follows requests to your backend,
+- the id of the **session replay**, if one is recording.
+
+Set the project's **Sentry organisation** in project settings — `https://acme.sentry.io`,
+or on a self-hosted Sentry `https://sentry.example.com/organizations/acme` — and the
+diagnostics card on the issue and in the inbox links straight to each one. Without it
+the ids are still shown, to search for by hand. The address can be set or changed at
+any time; the links are built when the page is drawn, so older reports pick it up too.
+
+If Sentry comes from its CDN loader there is nothing to install: the widget finds
+`window.Sentry`. If Sentry is bundled into your app it is not global, so hand it over:
+
+```js
+import * as Sentry from '@sentry/browser'; // or @sentry/react, @sentry/vue, …
+
+window.buggie.setSentry(Sentry);
+```
+
+Going the other way, the widget adds a breadcrumb and a `buggie.report` tag (such as
+`R-42`) to Sentry's scope when a report is sent, so any error later in that session
+shows it and you can search Sentry for `buggie.report:R-42`. It never creates a
+Sentry event of its own.
+
+A replay held only in Sentry's error buffer has not been uploaded, so there is nothing
+to link to and it is left out. The "last error" is the last one in that page, which
+may predate what the reporter describes; the trace is the more reliable link to the
+backend.
+
+Nothing is sent to Sentry by Buggie's servers and no Sentry credentials are stored.
+It works the same with GlitchTip or any other Sentry-compatible SDK.
 
 ## What it never does
 
@@ -305,8 +345,8 @@ always matches the server it reports to, so upgrading Buggie upgrades every
 customer's widget without anyone redeploying a front end.
 
 Options: `key` (required), `endpoint` (defaults to `https://buggie.eu`), `launcher`,
-`screenshot`, `requireEmail`, `release`, `identity`. Exports: `init`, `identify`,
-`setRelease`, `open`, `close`, `isSupported`, `reset`.
+`screenshot`, `requireEmail`, `release`, `identity`, `sentry`. Exports: `init`,
+`identify`, `setRelease`, `setSentry`, `open`, `close`, `isSupported`, `reset`.
 
 Three behaviours to rely on:
 

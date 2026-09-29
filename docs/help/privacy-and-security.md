@@ -16,6 +16,8 @@ Attached to a report:
 - The last 30 network calls: **method, URL, status and duration only**.
 - The most recent uncaught error or unhandled rejection, with its stack.
 - Whatever the host application passed to `identify()`.
+- If the page runs Sentry, the ids of its last error, trace and replay. Ids only;
+  nothing is read from Sentry beyond them.
 - A screenshot of the viewport, if the reporter chose to send one.
 - Whatever the reporter typed.
 

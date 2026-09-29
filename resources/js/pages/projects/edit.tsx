@@ -71,6 +71,7 @@ export default function EditProject({
     widgetModes = [],
     revealedSecret = null,
     clientTimeline = 'off',
+    sentryUrl = null,
 }: {
     project: ProjectSummary;
     widgetKeys: WidgetKeyRow[];
@@ -89,6 +90,8 @@ export default function EditProject({
     revealedSecret?: { key: string; secret: string } | null;
     /** Whether clients who hold this project can see its timeline. */
     clientTimeline?: 'off' | 'issues' | 'phases';
+    /** Where this project's Sentry organisation lives, so report ids become links. */
+    sentryUrl?: string | null;
 }) {
     const { data, setData, put, processing, errors } = useForm({
         name: project.name,
@@ -98,6 +101,7 @@ export default function EditProject({
         awaiting_reminder_days: clientWait.reminder_days === null ? '' : String(clientWait.reminder_days),
         awaiting_close_days: clientWait.close_days === null ? '' : String(clientWait.close_days),
         client_timeline: clientTimeline,
+        sentry_url: sentryUrl ?? '',
     });
     const [confirmingDelete, setConfirmingDelete] = useState(false);
 
@@ -136,6 +140,19 @@ export default function EditProject({
                         value={data.site_url}
                         placeholder="https://uat.acme.com"
                         onChange={(e) => setData('site_url', e.target.value)}
+                    />
+                </Field>
+
+                <Field
+                    label="Sentry organisation"
+                    error={errors.sentry_url}
+                    hint="If the site runs Sentry, each report carries the ids of the last Sentry error, the trace and the replay. With this set, they become links. On a self-hosted Sentry, include /organizations/your-org."
+                >
+                    <Input
+                        type="url"
+                        value={data.sentry_url}
+                        placeholder="https://acme.sentry.io"
+                        onChange={(e) => setData('sentry_url', e.target.value)}
                     />
                 </Field>
 

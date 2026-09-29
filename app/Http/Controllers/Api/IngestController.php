@@ -13,6 +13,7 @@ use App\Models\Workspace;
 use App\Support\Chat\ChatNotifications;
 use App\Support\Reports\Fingerprint;
 use App\Support\Reports\ReporterIdentityCheck;
+use App\Support\Reports\SentryLinks;
 use App\Support\Tenancy\Tenancy;
 use App\Support\Webhooks\Webhooks;
 use Illuminate\Http\JsonResponse;
@@ -278,6 +279,17 @@ class IngestController extends Controller
         // in the payload an older or hand-rolled client put it.
         if (is_array($environment['identity'] ?? null)) {
             unset($environment['identity']['user_hash']);
+        }
+
+        // Sentry ids become links on the issue page, so only well-formed ones stay.
+        if (array_key_exists('sentry', $environment)) {
+            $sentry = SentryLinks::sanitize($environment['sentry']);
+
+            if ($sentry === null) {
+                unset($environment['sentry']);
+            } else {
+                $environment['sentry'] = $sentry;
+            }
         }
 
         return self::bounded($environment, 2048);

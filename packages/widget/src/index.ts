@@ -58,11 +58,21 @@ export interface BuggieOptions {
 
     /** Set straight away, saving a separate identify() call. */
     identity?: Identity;
+
+    /**
+     * Your Sentry namespace (`import * as Sentry from '@sentry/browser'`, or the
+     * framework SDK you use), so each report links to the error, trace and replay
+     * Sentry recorded at the same moment. Not needed when Sentry comes from its CDN
+     * loader: the widget finds `window.Sentry` itself.
+     */
+    sentry?: unknown;
 }
 
 interface WidgetApi {
     identify(identity: Identity): void;
     setRelease(release: string): void;
+    /** Absent on Buggie servers older than the Sentry link. */
+    setSentry?(sentry: unknown): void;
     open(): void;
     close(): void;
     isSupported(): boolean;
@@ -116,6 +126,7 @@ export function init(options: BuggieOptions): Promise<WidgetApi | null> {
             if (api) {
                 if (options.identity) api.identify(options.identity);
                 if (options.release) api.setRelease(options.release);
+                if (options.sentry) api.setSentry?.(options.sentry);
             }
 
             resolve(api);
@@ -157,6 +168,11 @@ export async function identify(identity: Identity): Promise<void> {
 /** Tag reports with the build they came from. */
 export async function setRelease(release: string): Promise<void> {
     (await loading)?.setRelease(release);
+}
+
+/** Link reports to Sentry; see the `sentry` option. */
+export async function setSentry(sentry: unknown): Promise<void> {
+    (await loading)?.setSentry?.(sentry);
 }
 
 /** Open the reporter — for your own button, menu item or keyboard shortcut. */

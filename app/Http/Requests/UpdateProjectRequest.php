@@ -15,6 +15,9 @@ class UpdateProjectRequest extends FormRequest
             // Seeds the widget origin allowlist; see Project::defaultWidgetOrigins().
             'site_url' => ['nullable', 'url', 'max:255'],
             'is_archived' => ['boolean'],
+            // Turns the Sentry ids on reports into links. Only http(s), since it is
+            // drawn as the start of a link.
+            'sentry_url' => ['nullable', 'url:http,https', 'max:255'],
             // Waiting on a client: both off unless a day count is given. Closing
             // before the reminder would mean the reminder never goes.
             'awaiting_reminder_days' => ['nullable', 'integer', 'min:1', 'max:365'],

@@ -185,6 +185,19 @@ class Project extends Model
         };
     }
 
+    /**
+     * The Sentry organisation this project reports errors to, without a trailing
+     * slash: `https://acme.sentry.io`, or `https://sentry.example.com/organizations/acme`
+     * on a self-hosted Sentry. Null when not set, and then reports show Sentry ids
+     * without links.
+     */
+    public function sentryUrl(): ?string
+    {
+        $url = $this->settings['sentry_url'] ?? null;
+
+        return is_string($url) && preg_match('#^https?://#i', $url) ? rtrim($url, '/') : null;
+    }
+
     /** A project's reminder and auto-close settings, each off unless a day count is set. */
     public function clientWaitDays(string $which): ?int
     {

@@ -137,6 +137,7 @@ class ProjectController extends Controller
                 'has_status' => $project->awaitingClientStatus() !== null,
             ],
             'clientTimeline' => $project->clientTimelineMode() ?? 'off',
+            'sentryUrl' => $project->sentryUrl(),
             'statuses' => $project->statuses()->withCount('issues')->get()
                 ->map(fn (Status $status) => [
                     'id' => $status->id,
@@ -228,7 +229,7 @@ class ProjectController extends Controller
         $this->authorize('update', $project);
 
         $validated = $request->validated();
-        $wait = array_intersect_key($validated, array_flip(['awaiting_reminder_days', 'awaiting_close_days', 'client_timeline']));
+        $wait = array_intersect_key($validated, array_flip(['awaiting_reminder_days', 'awaiting_close_days', 'client_timeline', 'sentry_url']));
 
         if (array_key_exists('client_timeline', $wait)) {
             $wait['client_timeline'] = match ($wait['client_timeline']) {

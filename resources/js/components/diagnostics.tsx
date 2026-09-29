@@ -1,4 +1,5 @@
 import {
+    Activity,
     AlertCircle,
     ChevronRight,
     Clock,
@@ -25,6 +26,14 @@ export interface NetworkEntry {
     duration?: number;
 }
 
+/** An id Sentry recorded when the report was sent. No url until the project names its Sentry. */
+export interface SentryLink {
+    kind: 'event_id' | 'trace_id' | 'replay_id';
+    label: string;
+    id: string;
+    url: string | null;
+}
+
 export interface DiagnosticsData {
     /** Absent in the inbox, which shows the group size in its own words. */
     occurrence_count?: number;
@@ -39,6 +48,8 @@ export interface DiagnosticsData {
     console: ConsoleEntry[] | null;
     network: NetworkEntry[] | null;
     error: { message?: string; stack?: string } | null;
+    /** Present when Sentry was on the reporter's page. */
+    sentry?: SentryLink[] | null;
 }
 
 function Fact({ icon: Icon, label, value }: { icon: typeof Globe; label: string; value?: ReactNode }) {
@@ -61,6 +72,35 @@ function when(value: string | null | undefined): string | undefined {
     if (!value) return undefined;
 
     return new Date(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+/**
+ * What Sentry recorded at the same moment. Without a Sentry address on the project the
+ * ids are shown on their own, shortened, with the whole id to copy on hover.
+ */
+function SentryLinks({ links }: { links: SentryLink[] }) {
+    return (
+        <span className="flex flex-wrap gap-x-2">
+            {links.map((link) =>
+                link.url ? (
+                    <a
+                        key={link.kind}
+                        href={link.url}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="text-accent hover:underline"
+                        title={link.id}
+                    >
+                        {link.label}
+                    </a>
+                ) : (
+                    <span key={link.kind} className="font-mono select-all" title={`${link.label} ${link.id}`}>
+                        {link.label.toLowerCase()} {link.id.slice(0, 8)}
+                    </span>
+                ),
+            )}
+        </span>
+    );
 }
 
 /**
@@ -165,6 +205,7 @@ export function Diagnostics({
                 <Fact icon={UserIcon} label="Reporter" value={reporter} />
                 <Fact icon={Clock} label="First seen" value={when(data.first_seen_at)} />
                 <Fact icon={Clock} label="Last seen" value={when(data.last_seen_at)} />
+                <Fact icon={Activity} label="Sentry" value={data.sentry?.length ? <SentryLinks links={data.sentry} /> : undefined} />
             </dl>
 
             {(console.length > 0 || network.length > 0) && (

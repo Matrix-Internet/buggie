@@ -1,5 +1,6 @@
 import { environment, getConsole, getError, getNetwork } from './capture';
 import { attachAnnotator, capture, toBlob, type Tool } from './screenshot';
+import { markReported, sentryContext } from './sentry';
 
 export interface WidgetConfig {
     endpoint: string;
@@ -481,7 +482,12 @@ export class Widget {
                         source: this.identity.email ? 'identify' : email ? 'typed' : null,
                         user_hash: typeof this.identity.user_hash === 'string' ? this.identity.user_hash : null,
                     },
-                    environment: { ...environment(this.release), identity: scrubIdentity(this.identity) },
+                    environment: {
+                        ...environment(this.release),
+                        identity: scrubIdentity(this.identity),
+                        // Absent unless Sentry is on the page; see sentry.ts.
+                        sentry: sentryContext() ?? undefined,
+                    },
                     console: getConsole(),
                     network: getNetwork(),
                     error: captured,
@@ -507,6 +513,8 @@ export class Widget {
             if (result.upload_url && this.canvas) {
                 await this.upload(result.upload_url, this.canvas);
             }
+
+            if (result.reference) markReported(result.reference);
 
             this.showThanks(panel, result.reference);
         } catch {

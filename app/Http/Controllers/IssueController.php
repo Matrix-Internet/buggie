@@ -28,6 +28,7 @@ use App\Support\Issues\ClientConversation;
 use App\Support\Issues\IssueQuery;
 use App\Support\Issues\IssueQueryFilter;
 use App\Support\Reports\ReporterLink;
+use App\Support\Reports\SentryLinks;
 use App\Support\Tenancy\Tenancy;
 use App\Support\Time\Duration;
 use Illuminate\Database\Eloquent\Builder;
@@ -700,6 +701,7 @@ class IssueController extends Controller
             'first_seen_at' => $issue->first_seen_at?->toIso8601String(),
             'last_seen_at' => $issue->last_seen_at?->toIso8601String(),
             'environment' => $report?->environment,
+            'sentry' => SentryLinks::for($report?->environment, $issue->project->sentryUrl()),
             'console' => $report?->console,
             'network' => $report?->network,
             'error' => $report?->error,

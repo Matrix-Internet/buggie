@@ -12,6 +12,13 @@ today you are running `main`, which is honest rather than ideal — see
 
 ### Added
 
+- **Reports link to Sentry.** When the reporter's page runs Sentry, the widget sends
+  the ids of the last Sentry error, the current trace and the session replay. Set the
+  project's Sentry organisation in project settings and the diagnostics card links to
+  each; the trace is the way to the exception on your server. Bundled Sentry needs
+  `buggie.setSentry(Sentry)` (or the npm package's `sentry` option); from the CDN it
+  is found automatically. The widget also tags Sentry's scope with the report's
+  reference. No credentials are stored and Buggie's servers never contact Sentry.
 - **The widget records files that failed to load.** A script, stylesheet, image,
   video or frame that 404s or is blocked now appears in the report's console, e.g.
   "Failed to load script: https://…/app.js". These errors don't reach page scripts

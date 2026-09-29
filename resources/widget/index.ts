@@ -1,5 +1,6 @@
 import { resolveOptIn, setOptIn, shouldShowLauncher } from './audience';
 import { installCapture } from './capture';
+import { setSentry } from './sentry';
 import { Widget, type Identity } from './ui';
 
 /**
@@ -20,6 +21,11 @@ declare global {
 interface BuggieApi {
     identify(identity: Identity): void;
     setRelease(release: string): void;
+    /**
+     * Link reports to Sentry. Only needed when Sentry is bundled rather than loaded
+     * from its CDN, since then there is no window.Sentry to find: pass the namespace.
+     */
+    setSentry(sentry: unknown): void;
     open(): void;
     close(): void;
     isSupported(): boolean;
@@ -70,6 +76,7 @@ function boot() {
             if (!widget.ignoreIdentity) Object.assign(widget.identity, identity ?? {});
         },
         setRelease: (release) => (widget.release = release),
+        setSentry,
         open: () => void widget.show(),
         close: () => widget.dismiss(),
         // Lets a host application decide whether to offer reporting at all.

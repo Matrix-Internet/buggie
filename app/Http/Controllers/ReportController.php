@@ -9,6 +9,7 @@ use App\Enums\ReportState;
 use App\Models\Issue;
 use App\Models\Project;
 use App\Models\Report;
+use App\Support\Reports\SentryLinks;
 use App\Support\Tenancy\Tenancy;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,7 +28,7 @@ class ReportController extends Controller
         $this->authorize('viewAny', Report::class);
 
         $reports = Report::awaitingTriage()
-            ->with('project:id,key,name,slug')
+            ->with('project:id,key,name,slug,settings')
             ->when(
                 $request->filled('project'),
                 fn ($q) => $q->whereHas('project', fn ($p) => $p->where('slug', $request->string('project'))),
@@ -194,6 +195,7 @@ class ReportController extends Controller
                 'email' => $report->reporter_email,
             ],
             'environment' => $report->environment,
+            'sentry' => SentryLinks::for($report->environment, $report->project->sentryUrl()),
             'console' => $report->console,
             'network' => $report->network,
             'error' => $report->error,

@@ -72,6 +72,20 @@ export function BugReporter({ user }: { user?: { id: number; email: string } }) 
 Next.js, Remix and other server-rendered frameworks are fine: nothing touches the DOM
 until `init()` runs, and `init()` resolves to `null` on the server rather than throwing.
 
+## Linking reports to Sentry
+
+If the app uses Sentry, pass its namespace and each report carries the ids of the
+last Sentry error, the current trace and the session replay. The issue page links
+straight to them once the project's Sentry address is set in Buggie.
+
+```ts
+import * as Sentry from '@sentry/browser';
+
+init({ key: 'pk_live_9f3a2b', sentry: Sentry });
+```
+
+Loaded from Sentry's CDN instead? Nothing to do — the widget finds `window.Sentry`.
+
 ## API
 
 | | |
@@ -79,6 +93,7 @@ until `init()` runs, and `init()` resolves to `null` on the server rather than t
 | `init(options)` | Loads the widget. Safe to call repeatedly — later calls reuse the first. |
 | `identify(identity)` | Attach who is using the app. |
 | `setRelease(release)` | Tag reports with a build. |
+| `setSentry(Sentry)` | Link reports to Sentry. |
 | `open()` / `close()` | Show or hide the reporter. |
 | `isSupported()` | Whether it can run here — false while server rendering. |
 | `reset()` | Tear down. For tests and hot reloads. |
@@ -94,6 +109,7 @@ until `init()` runs, and `init()` resolves to `null` on the server rather than t
 | `requireEmail` | `false` | Demand an address before sending. |
 | `release` | — | Build identifier. |
 | `identity` | — | Set immediately, saving an `identify()` call. |
+| `sentry` | — | Your Sentry namespace, to link reports to it. |
 
 ## What it collects, and what it never does
 
