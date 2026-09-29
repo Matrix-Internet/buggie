@@ -74,6 +74,9 @@ is not editable.
 `/projects/{slug}/edit`, reachable from the project page. It holds:
 
 - Name, site URL, description.
+- **Sentry organisation** — if the site runs Sentry, reports carry the ids of its last
+  error, trace and replay, and this address turns them into links. See
+  [Linking reports to Sentry](widget.md#linking-reports-to-sentry).
 - **Archive this project** — archived projects drop out of the dashboard, the project
   picker on the new-issue screen and the filter bar, but their issues remain.
 - The [workflow editor](workflow.md).
