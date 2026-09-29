@@ -23,10 +23,8 @@ the description, with a line recording the address it came from.
 The project token is random rather than derived from the project slug, so guessing one
 project's address does not reveal another's.
 
-> **Worth knowing:** the address is not yet shown anywhere in the interface. The token
-> exists on every project from the moment it is created, but reading it currently needs
-> database access. Until that is surfaced, email-in is practical only for an operator
-> who can look the token up.
+The address is shown in project settings under **File issues by email**, with a copy
+button.
 
 Who wrote the message decides what the issue looks like:
 

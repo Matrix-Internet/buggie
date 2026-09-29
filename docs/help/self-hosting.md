@@ -60,6 +60,7 @@ to start and prints the exact command, but it is worth knowing why.
 | `BUGGIE_HOSTED` | Leave `false`. `true` is the commercial service and turns on plan limits. |
 | `DIGEST_DELAY_MINUTES` | How long activity on one issue is gathered before emailing. Default 5. |
 | `MAIL_INBOUND_DOMAIN`, `MAILGUN_SIGNING_KEY` | [Email in](email.md), optional. With no signing key the inbound endpoint accepts nothing. |
+| `BUGGIE_REQUIRE_VERIFIED_EMAIL` | Whether an account must verify its email before creating a workspace. Defaults to on when hosted and off otherwise. Needs working mail. |
 | `BUGGIE_OPERATORS` | Comma-separated addresses that operate the install, and the only ones allowed into the queue dashboard at `/horizon`. Empty means nobody is named, which is the default. The dashboard shows jobs from every workspace, which is why it is not tied to a workspace role. |
 | `BUGGIE_REGISTRATION` | `invite`, `request` or `open`. Unset, the mode chosen on Settings → Instance applies, and `invite` if none was. Set, it overrides the screen. |
 | `SENTRY_LARAVEL_DSN` | Optional error reporting, pointed wherever you like. Empty means nothing is sent anywhere. |
@@ -86,6 +87,12 @@ Operators are the account made on first run, anyone promoted with
 `php artisan buggie:operator you@example.com`, and anybody in `BUGGIE_OPERATORS`.
 `php artisan buggie:audit-signups` lists accounts in no workspace and workspaces no
 operator owns, for checking what was set up while sign-up was open. It changes nothing.
+`php artisan buggie:client-assignees` lists issues assigned to a client and projects
+whose default assignee is one, which should not happen; it also changes nothing.
+
+An address in `BUGGIE_OPERATORS` counts only once that account has verified its email,
+because anybody can register with any address. On an install with no working mail,
+promote with `buggie:operator` instead.
 
 ## The queue worker and the scheduler
 
@@ -95,18 +102,21 @@ Two background processes are load-bearing.
 issues. Without it, reports still arrive and ingest still answers `202` — they simply
 never fingerprint, never group and never notify, and nothing on screen says so.
 
-**The scheduler** runs three jobs:
+**The scheduler** runs four jobs:
 
 - `notifications:flush`, every minute, which sends [digests](notifications.md).
 - `buggie:prune`, daily at 03:20, which ages out old screenshots and reporter
   identities.
 - `issues:chase-due`, daily at 06:40, which chases
   [due dates](notifications.md#due-dates).
+- `issues:chase-clients`, hourly, which reminds clients who owe a reply and closes
+  issues that waited too long — per project, and only where
+  [Waiting on the client](clients.md) is switched on.
 
 Without the scheduler, digests accumulate and are never delivered, nothing is ever
-pruned, and no due date is ever chased.
+pruned, no due date is ever chased and no client is ever reminded.
 
-All three are safe to run by hand. `issues:chase-due` in particular records the day it
+All four are safe to run by hand. `issues:chase-due` in particular records the day it
 last chased each issue, so a second run on the same day sends nothing;
 `issues:chase-due --dry-run` reports who would be told without recording anything.
 

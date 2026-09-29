@@ -17,8 +17,11 @@ ten.
 | Status changed | An issue you watch moved |
 | Activity on an issue you reported | |
 | Due soon, or overdue | An issue you hold or watch is nearly due, or is late |
+| Waiting on your reply | The team has replied to you and needs an answer to carry on (clients) |
+| A client replied | A client answers an issue you hold, or watch when nobody holds it |
+| Reminders about a reply | An issue has been waiting on your reply for a while (clients) |
 
-All six are on by default. Preferences are opt-out: silence should be chosen, not the
+All nine are on by default. Preferences are opt-out: silence should be chosen, not the
 default.
 
 One switch covers both surfaces. Turning a reason off stops the email *and* keeps it
@@ -39,8 +42,8 @@ Three rules are enforced regardless of preferences:
 - Nothing crosses a workspace boundary: a digest only ever covers one issue in one
   workspace.
 
-There is no control for watching or unwatching an issue by hand, and the watcher list
-is not shown on the issue page.
+The **Watching** row on the issue page watches or unwatches by hand, and shows who
+else is watching.
 
 ## The list
 

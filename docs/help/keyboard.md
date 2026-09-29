@@ -42,6 +42,9 @@ bottom of the sidebar.
 | `g` `l` | Switch to the list |
 | `g` `a` | Filter to issues assigned to me |
 
+On the board, click an empty part of it (or tab to it) and `←` / `→` move one column
+at a time.
+
 `e`, `a` and `p` open an inline popover on the highlighted row; they do nothing for a
 client, who cannot change an issue's state.
 

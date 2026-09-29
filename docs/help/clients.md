@@ -55,10 +55,11 @@ side.
 
 ### Changing a client's projects afterwards
 
-There is no control for this yet. The project grants are set when the invitation is
-accepted. In practice: invite the same address again with the fuller list of projects
-ticked, and ask them to open the new link — accepting adds the extra projects without
-disturbing their membership. Removing a project again needs database access.
+Owners and admins change them under **Settings → Members**: open the client's row,
+tick or untick projects (and set each project's tier), and save. Removing a project
+takes it away at once — the project, its issues and its name disappear from everything
+the client can reach. Staff are not listed here, because they already see every
+project.
 
 Removing someone from the workspace (**Members → remove**) also removes all their
 project grants. The workspace owner cannot be removed.

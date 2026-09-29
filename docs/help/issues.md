@@ -206,10 +206,11 @@ Marking something as a duplicate of an issue that is itself a duplicate points a
 original. A client is only told the original's key when it is visible to clients in the
 same project; otherwise they read that it duplicates an issue the team is already on.
 
-There is currently no control in the interface for adding or removing a link; the
-endpoints exist (`POST` and `DELETE` on `/issues/{key}/relations`, taking a `key` and
-a `type`) but nothing on the issue page calls them. Links created another way display
-correctly.
+Links are added from the **Relations** section of the issue page: choose the kind of
+link, then pick the other issue. Each link has an unlink button beside it. The
+[timeline](timeline.md) creates *blocks* links when you draw a dependency. The same
+endpoints are there for scripts: `POST` and `DELETE` on `/issues/{key}/relations`,
+taking a `key` and a `type`.
 
 ### Visibility
 
@@ -223,8 +224,8 @@ Deleting an issue is a soft delete and requires owner or admin.
 
 You are added as a watcher of an issue when you report it, are assigned it, comment
 on it, or are mentioned in it. Watchers are what [notifications](notifications.md)
-are sent to. There is no button to watch or unwatch by hand, and the watcher list is
-not shown on the issue page.
+are sent to. The **Watching** row on the issue page toggles it for you by hand, and
+shows how many people are watching, with their names on hover.
 
 ## Related pages
 

@@ -52,7 +52,8 @@ Four values: **bug** (the default), **feature**, **task**, **question**. Set on
 creation, changed from the **Type** row on the issue page, and filtered with
 `type:feature`.
 
-There is no way to add a type. Custom fields and custom types are deliberately absent.
+There is no way to add a type. For anything else you want to record, see
+[custom fields](custom-fields.md).
 
 ## Assignees
 
@@ -62,9 +63,9 @@ the issue page, from the issue list with `a`, or in bulk.
 Being assigned makes you a watcher of that issue and sends you a
 [notification](notifications.md).
 
-A project can carry a default assignee, which new issues inherit. The API accepts it;
-there is no control for it in project settings, so in practice new issues start
-unassigned unless you set one.
+A project can carry a default assignee, which new issues inherit. There is no control
+for it in project settings yet, so in practice new issues start unassigned unless you
+set one.
 
 Clients cannot assign anything and are not shown the staff list. Only staff can be
 assigned an issue.

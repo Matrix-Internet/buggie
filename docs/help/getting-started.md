@@ -45,8 +45,10 @@ exists and let anyone enumerate customer names.
 2. You are then asked to create a workspace: a name and the address it will live on.
 3. You land inside the new workspace as its **owner**.
 
-Registration does not create a workspace for you automatically, and there is no
-email verification step — an account works as soon as it is created.
+Registration does not create a workspace for you automatically. On the hosted
+service you are asked to verify your email address before creating one; a self-hosted
+install skips that unless `BUGGIE_REQUIRE_VERIFIED_EMAIL` is on. Accepting an
+invitation verifies you, since the link arrived at that address.
 
 That is how the hosted service works. **A self-hosted install is invitation-only by
 default**: you register by following an invitation from a workspace, and only the
