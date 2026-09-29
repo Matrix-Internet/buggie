@@ -1,5 +1,5 @@
-# Security fixes should not wait on somebody noticing them. Grouped and weekly so the
-# pull requests arrive as one batch per ecosystem rather than a steady drip.
+# Security fixes should not wait on somebody noticing them. Every ecosystem is grouped,
+# so updates arrive as one pull request per ecosystem per interval, not a steady drip.
 version: 2
 updates:
   - package-ecosystem: composer
@@ -17,15 +17,23 @@ updates:
   - package-ecosystem: npm
     directory: /packages/widget
     schedule: { interval: monthly }
+    groups:
+      widget-loader: { patterns: ["*"] }
 
   - package-ecosystem: gradle
     directory: /packages/kotlin
     schedule: { interval: monthly }
+    groups:
+      android-sdk: { patterns: ["*"] }
 
   - package-ecosystem: docker
     directory: /docker/php
     schedule: { interval: monthly }
+    groups:
+      images: { patterns: ["*"] }
 
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: monthly }
+    groups:
+      actions: { patterns: ["*"] }
