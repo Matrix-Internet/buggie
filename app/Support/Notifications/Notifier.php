@@ -50,6 +50,16 @@ class Notifier
             return;
         }
 
+        // Text quoted from a comment has a client's version where it names staff.
+        // Chosen here, per recipient, so a caller cannot send the team's to a client.
+        if (array_key_exists('client_excerpt', $data)) {
+            if (! $this->isStaff($recipient, $issue)) {
+                $data['excerpt'] = $data['client_excerpt'];
+            }
+
+            unset($data['client_excerpt']);
+        }
+
         $row = [
             'user_id' => $recipient->id,
             'issue_id' => $issue->id,

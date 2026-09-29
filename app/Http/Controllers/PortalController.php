@@ -6,6 +6,7 @@ use App\Models\Comment;
 use App\Models\PortalToken;
 use App\Support\Issues\AuthorLabel;
 use App\Support\Issues\ClientConversation;
+use App\Support\RichText\Mentions;
 use App\Support\RichText\TiptapDocument;
 use App\Support\Tenancy\Tenancy;
 use Illuminate\Http\RedirectResponse;
@@ -43,7 +44,7 @@ class PortalController extends Controller
                 'issue' => [
                     'key' => $issue->key,
                     'title' => $issue->title,
-                    'description' => $issue->description,
+                    'description' => Mentions::forClients($issue->description, $portal->workspace),
                     'project' => $issue->project->name,
                     // Category, not the customer's status name: "Won't Fix" needs
                     // explaining to a reporter, "closed" does not.
@@ -56,7 +57,7 @@ class PortalController extends Controller
                     ->get()
                     ->map(fn (Comment $comment) => [
                         'id' => $comment->id,
-                        'body' => $comment->body,
+                        'body' => Mentions::forClients($comment->body, $portal->workspace),
                         // The team as the workspace, as everywhere a client looks; the
                         // reporter's own words under their own address.
                         'author' => $comment->author

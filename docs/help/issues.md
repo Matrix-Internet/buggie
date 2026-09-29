@@ -178,7 +178,27 @@ moves the issue to the project's awaiting-client status — see
 Clients see no toggle; their comments are always public. A client cannot post an
 internal note even by crafting the request.
 
-You can edit and delete your own comments. Owners and admins can delete anyone's.
+You can delete your own comments, and owners and admins can delete anyone's. There is
+no button for editing a comment yet; the endpoint (`PATCH /comments/{id}`) exists and
+only its author may use it.
+
+### Mentions
+
+Type `@` in a comment or description and pick somebody from the list. They become a
+watcher and are notified, and the name is highlighted where it appears.
+
+Who is offered depends on who will read it:
+
+- **An internal note, or an issue that is not shared:** the team only.
+- **A public comment, or the description of a shared issue:** the team and the clients
+  the issue is shared with, marked *client*.
+- **A client writing:** nobody. Typed `@names` stay as plain text.
+
+A mention shows the person's name as it was when the text was saved, never whatever
+the browser sent. A client reads a
+member of the team as the workspace, as they do beside comments, unless the workspace
+shows staff names. Editing a description or comment notifies only the people it names
+for the first time.
 
 ### Attachments
 

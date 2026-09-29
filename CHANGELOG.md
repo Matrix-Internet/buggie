@@ -12,6 +12,10 @@ today you are running `main`, which is honest rather than ideal — see
 
 ### Added
 
+- **@mentions.** Type `@` in a comment or description to pick a colleague — or, in a
+  public comment, a client the issue is shared with. They become a watcher and are
+  notified. The server decides who may be mentioned and what the mention says, and a
+  client reads the team as the workspace unless it shows staff names.
 - **Reports link to Sentry.** When the reporter's page runs Sentry, the widget sends
   the ids of the last Sentry error, the current trace and the session replay. Set the
   project's Sentry organisation in project settings and the diagnostics card links to
@@ -227,6 +231,13 @@ today you are running `main`, which is honest rather than ideal — see
 
 ### Fixed
 
+- **Deleting a workspace cancels its subscription.** It used to leave the Stripe
+  subscription renewing. If Stripe cannot confirm the cancellation, nothing is deleted.
+- **Spaces around formatting survive saving.** Text straight after bold, a link, code
+  or a mention lost its leading space ("**bold** text" became "boldtext"), because
+  every string in the request was trimmed, including fragments of rich text.
+- **Editing a comment (`PATCH /comments/{id}`) no longer fails** with a server error.
+  There is still no button for it on the issue page.
 - **CSV export broke off on projects with custom fields.** An issue that left a field
   empty, which is most of them, raised an error partway through the file. Only
   projects with custom fields were affected, such as ones made from the *Client

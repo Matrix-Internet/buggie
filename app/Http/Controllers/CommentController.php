@@ -3,10 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Actions\AddComment;
+use App\Enums\NotificationReason;
+use App\Enums\WatchReason;
 use App\Http\Requests\StoreCommentRequest;
 use App\Models\Comment;
 use App\Models\Issue;
 use App\Support\Issues\ClientConversation;
+use App\Support\Notifications\Notifier;
+use App\Support\RichText\Mentions;
 use App\Support\RichText\TiptapDocument;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -46,17 +50,33 @@ class CommentController extends Controller
         return back()->with('success', 'Replied. Waiting on the client.');
     }
 
-    public function update(Request $request, Comment $comment): RedirectResponse
+    public function update(Request $request, Comment $comment, Notifier $notifier): RedirectResponse
     {
         $this->authorize('update', $comment);
 
         $validated = $request->validate(['body' => ['required', 'array']]);
 
-        $comment->update([
-            'body' => $validated['body'],
-            'body_text' => TiptapDocument::toPlainText($validated['body']),
-            'edited_at' => now(),
-        ]);
+        $issue = $comment->issue;
+        $candidates = Mentions::candidates($issue->workspace, $issue, $comment->is_internal, $request->user());
+        $before = TiptapDocument::mentionedUserIds($comment->body);
+        $body = Mentions::normalise($validated['body'], $candidates);
+
+        // edited_at is not fillable, so it is set by name; mass-assigning it threw and
+        // no edit had ever been saved.
+        $comment->fill(['body' => $body, 'body_text' => TiptapDocument::toPlainText($body)]);
+        $comment->edited_at = now();
+        $comment->save();
+
+        // Somebody named for the first time in an edit hears about it, as they would
+        // have if it had been there from the start. Nobody already named is told again.
+        $added = array_diff(TiptapDocument::mentionedUserIds($body), $before);
+
+        foreach ($candidates->whereIn('id', $added) as $mentioned) {
+            $issue->watch($mentioned, WatchReason::Mentioned);
+            $notifier->record($mentioned, $issue, NotificationReason::Mentioned, $request->user(), [
+                'internal' => $comment->is_internal,
+            ]);
+        }
 
         return back();
     }

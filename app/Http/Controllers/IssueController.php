@@ -19,6 +19,7 @@ use App\Models\Status;
 use App\Models\TimeEntry;
 use App\Models\User;
 use App\Models\Version;
+use App\Models\Workspace;
 use App\Support\CustomFields\FieldValues;
 use App\Support\Issues\Assignable;
 use App\Support\Issues\AuthorLabel;
@@ -29,6 +30,7 @@ use App\Support\Issues\IssueQuery;
 use App\Support\Issues\IssueQueryFilter;
 use App\Support\Reports\ReporterLink;
 use App\Support\Reports\SentryLinks;
+use App\Support\RichText\Mentions;
 use App\Support\Tenancy\Tenancy;
 use App\Support\Time\Duration;
 use Illuminate\Database\Eloquent\Builder;
@@ -230,6 +232,9 @@ class IssueController extends Controller
             'project' => ['id' => $project->id, 'key' => $project->key, 'name' => $project->name, 'slug' => $project->slug],
             'facets' => $this->facets(),
             'statuses' => $this->statusesFor($project),
+            'mentionable' => Mentions::candidates($project->workspace, null, true, $request->user())
+                ->map(fn (User $user) => ['id' => $user->id, 'name' => $user->name, 'client' => false])
+                ->values(),
             // A client filing an issue is only offered the fields they can see; the
             // internal ones are not rendered blank-and-disabled, they are absent.
             'customFields' => app(FieldValues::class)
@@ -388,7 +393,8 @@ class IssueController extends Controller
             ] : null,
             'issue' => [
                 ...$this->summary($issue),
-                'description' => $issue->description,
+                // Staff mentioned in it read as the workspace to a client; see Mentions.
+                'description' => $staff ? $issue->description : Mentions::forClients($issue->description, $workspace),
                 'reporter' => $issue->reporter === null ? null : $author($issue->reporter),
                 // Only if the reader could open it; a key is not something a client
                 // should learn about work they cannot see.
@@ -451,6 +457,10 @@ class IssueController extends Controller
             'diagnostics' => $staff ? $this->diagnostics($issue) : null,
             'relationTypes' => RelationType::options(),
 
+            // Who the editor offers after @. Staff only: a client is offered nobody,
+            // and the server would drop their mentions anyway.
+            'mentionable' => $staff ? $this->mentionable($workspace, $issue) : [],
+
             // Who can be named in a "specific clients" audience. Staff only.
             'projectClients' => $staff
                 ? app(ClientAudienceSummary::class)->candidates($issue)
@@ -484,7 +494,7 @@ class IssueController extends Controller
                 ->get()
                 ->map(fn ($comment) => [
                     'id' => $comment->id,
-                    'body' => $comment->body,
+                    'body' => $staff ? $comment->body : Mentions::forClients($comment->body, $workspace),
                     'is_internal' => $comment->is_internal,
                     // Portal and email replies have no account; the system's own
                     // notes (auto-close) have no author and speak as the workspace.
@@ -676,6 +686,25 @@ class IssueController extends Controller
             'color' => $s->color,
             'open' => $s->category->isOpen(),
         ])->all();
+    }
+
+    /**
+     * Everybody who may be mentioned on this issue, each marked client or not so the
+     * editor can offer only staff in an internal note.
+     *
+     * @return Collection<int, array{id: int, name: string, client: bool}>
+     */
+    private function mentionable(Workspace $workspace, Issue $issue): Collection
+    {
+        $staff = Mentions::candidates($workspace, $issue, true, null)->pluck('id')->all();
+
+        return Mentions::candidates($workspace, $issue, false, null)
+            ->map(fn (User $user) => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'client' => ! in_array($user->id, $staff, true),
+            ])
+            ->values();
     }
 
     /** @return array<string, mixed> */

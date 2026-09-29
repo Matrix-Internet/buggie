@@ -11,6 +11,7 @@ use App\Support\Chat\ChatNotifications;
 use App\Support\Issues\AuthorLabel;
 use App\Support\Issues\ClientConversation;
 use App\Support\Notifications\Notifier;
+use App\Support\RichText\Mentions;
 use App\Support\RichText\TiptapDocument;
 use App\Support\Webhooks\Webhooks;
 use Illuminate\Support\Facades\DB;
@@ -27,15 +28,22 @@ class AddComment
     public function handle(Issue $issue, array $attributes, User $author, bool $notify = true): Comment
     {
         return DB::transaction(function () use ($issue, $attributes, $author, $notify) {
-            $body = $attributes['body'];
+            // Internal unless explicitly made public. A client seeing an internal
+            // note is the failure mode worth defaulting against.
+            $internal = $attributes['is_internal'] ?? true;
+
+            // Only people who may be mentioned here stay mentioned, under their own
+            // names; see Mentions.
+            $body = Mentions::normalise(
+                $attributes['body'],
+                Mentions::candidates($issue->workspace, $issue, $internal, $author),
+            );
 
             $comment = $issue->comments()->create([
                 'user_id' => $author->id,
                 'body' => $body,
                 'body_text' => TiptapDocument::toPlainText($body),
-                // Internal unless explicitly made public. A client seeing an internal
-                // note is the failure mode worth defaulting against.
-                'is_internal' => $attributes['is_internal'] ?? true,
+                'is_internal' => $internal,
                 'source' => 'web',
             ]);
 
@@ -66,6 +74,9 @@ class AddComment
                 if ($notify) {
                     $this->notifier->watchers($issue, NotificationReason::Commented, $author, [
                         'excerpt' => $comment->body_text,
+                        // What a client watching reads instead: staff mentioned as the
+                        // workspace, as everywhere else a client looks.
+                        'client_excerpt' => TiptapDocument::toPlainText(Mentions::forClients($body, $issue->workspace)),
                         // Clients watching this issue must not be told about internal notes.
                         'internal' => $internal,
                     ]);

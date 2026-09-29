@@ -4,6 +4,7 @@ namespace App\Actions;
 
 use App\Enums\ClientAudience;
 use App\Enums\IssueEventType;
+use App\Enums\IssueVisibility;
 use App\Enums\NotificationReason;
 use App\Enums\StatusCategory;
 use App\Enums\WatchReason;
@@ -18,8 +19,10 @@ use App\Support\Chat\ChatNotifications;
 use App\Support\CustomFields\FieldValues;
 use App\Support\Issues\Assignable;
 use App\Support\Notifications\Notifier;
+use App\Support\RichText\Mentions;
 use App\Support\RichText\TiptapDocument;
 use App\Support\Webhooks\Webhooks;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -57,10 +60,12 @@ class UpdateIssue
             // their status, and strict mode turns that into an exception rather than
             // a quiet extra query.
             $wasOpen = $issue->loadMissing('status')->isOpen();
+            $mentioned = collect();
+
             foreach ($attributes as $field => $value) {
                 match ($field) {
                     'title' => $this->title($issue, $value, $actor),
-                    'description' => $this->description($issue, $value),
+                    'description' => $mentioned = $this->description($issue, $value, $actor),
                     'status_id' => $this->status($issue, (int) $value, $actor),
                     'assignee_id' => $this->assignee($issue, $value, $actor),
                     'priority' => $this->priority($issue, (int) $value, $actor),
@@ -94,6 +99,15 @@ class UpdateIssue
                 $this->fields->store($issue, $customFields);
             }
 
+            // Only people newly named in the description: editing a typo must not
+            // tell everyone already mentioned all over again.
+            foreach ($mentioned as $user) {
+                $issue->watch($user, WatchReason::Mentioned);
+                $this->notifier->record($user, $issue, NotificationReason::Mentioned, $actor, [
+                    'internal' => $issue->visibility !== IssueVisibility::Client,
+                ]);
+            }
+
             $fresh = $issue->refresh()->load(['status', 'project', 'assignee']);
 
             // Closed is its own event as well as an update: "tell me when something
@@ -125,12 +139,29 @@ class UpdateIssue
         $issue->title = $value;
     }
 
-    /** @param array<string, mixed>|null $value */
-    private function description(Issue $issue, ?array $value): void
+    /**
+     * @param  array<string, mixed>|null  $value
+     * @return Collection<int, User> whoever the new text mentions that the old did not
+     */
+    private function description(Issue $issue, ?array $value, ?User $actor): Collection
     {
+        $before = TiptapDocument::mentionedUserIds($issue->description);
+        $candidates = Mentions::candidates(
+            $issue->workspace,
+            $issue,
+            $issue->visibility !== IssueVisibility::Client,
+            $actor,
+        );
+
+        $value = Mentions::normalise($value, $candidates);
+
         // Body edits are not events; the feed would fill with noise.
         $issue->description = $value;
         $issue->description_text = TiptapDocument::toPlainText($value);
+
+        $added = array_diff(TiptapDocument::mentionedUserIds($value), $before);
+
+        return $candidates->whereIn('id', $added)->values();
     }
 
     private function status(Issue $issue, int $statusId, ?User $actor): void

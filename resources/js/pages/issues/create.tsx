@@ -2,7 +2,7 @@ import { Button } from '@/components/button';
 import { Field, Input } from '@/components/field';
 import { StatusDot, TypeIcon } from '@/components/issue-bits';
 import { Popover, PopoverItem } from '@/components/popover';
-import { RichTextEditor } from '@/components/rich-text';
+import { RichTextEditor, type Mentionable } from '@/components/rich-text';
 import { AppLayout } from '@/layouts/app-layout';
 import type { Facets, IssueStatus, IssueTypeValue, SharedProps } from '@/types';
 import { Head, useForm, usePage } from '@inertiajs/react';
@@ -19,11 +19,14 @@ export default function CreateIssue({
     facets,
     statuses,
     customFields = [],
+    mentionable = [],
 }: {
     project: { id: number; key: string; name: string; slug: string };
     facets: Facets;
     statuses: IssueStatus[];
     customFields?: CustomFieldDefinition[];
+    /** Staff only: a new issue is shared with nobody yet. */
+    mentionable?: Mentionable[];
 }) {
     const { auth } = usePage<SharedProps>().props;
     const isStaff = auth.role !== 'client';
@@ -191,6 +194,7 @@ export default function CreateIssue({
                     <RichTextEditor
                         value={data.description}
                         onChange={(value) => setData('description', value)}
+                        mentions={mentionable}
                         placeholder="What happens, what you expected instead, and how to reproduce it."
                     />
                     {errors.description && (

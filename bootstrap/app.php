@@ -26,6 +26,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Rich text arrives as editor JSON, and its text nodes are fragments of a
+        // sentence: trimming "@Dave" + " is on it" stores "@Daveis on it", and the
+        // same happens after bold, a link or a line of code. Only the nested parts
+        // are spared; a plain string field called body is still trimmed.
+        $middleware->trimStrings(except: ['body.*', 'description.*']);
+
         // Runs on every web request: binds the tenant and turns on strict mode,
         // so a tenant query with no workspace resolved throws instead of leaking.
         $middleware->web(append: [

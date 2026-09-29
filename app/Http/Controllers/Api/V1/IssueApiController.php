@@ -12,6 +12,7 @@ use App\Models\Project;
 use App\Support\CustomFields\FieldValues;
 use App\Support\Issues\IssueQuery;
 use App\Support\Issues\IssueQueryFilter;
+use App\Support\RichText\Mentions;
 use App\Support\Tenancy\Tenancy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -132,7 +133,9 @@ class IssueApiController extends Controller
     {
         return [
             ...$this->summary($issue),
-            'description' => $issue->description,
+            'description' => $this->isStaff(request())
+                ? $issue->description
+                : Mentions::forClients($issue->description, $this->tenancy->currentOrFail()),
             'reporter' => $issue->reporter?->only(['id', 'name']),
             'visibility' => $issue->visibility->value,
             'due_on' => $issue->due_on?->toDateString(),

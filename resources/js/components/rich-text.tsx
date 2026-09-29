@@ -1,9 +1,13 @@
+import { mentionSuggestion, type Mentionable } from '@/components/mention-suggestion';
 import { cn } from '@/lib/utils';
+import Mention from '@tiptap/extension-mention';
 import Placeholder from '@tiptap/extension-placeholder';
 import { EditorContent, useEditor, type JSONContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Bold, Code, Italic, List, ListOrdered, Quote } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+
+export type { Mentionable };
 
 // Link ships inside StarterKit in tiptap 3 — configure it there rather than
 // registering the extension twice.
@@ -14,12 +18,17 @@ const extensions = [
     }),
 ];
 
+// Every editor and viewer knows the node, or a stored mention would be dropped the
+// moment the text was shown or edited. The server decides the label; see Mentions.php.
+const mention = Mention.configure({ HTMLAttributes: { class: 'mention' } });
+
 const prose =
     'prose-sm max-w-none text-ink [&_p]:my-1.5 [&_ul]:my-1.5 [&_ol]:my-1.5 ' +
     '[&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-5 [&_ol]:pl-5 ' +
     '[&_h2]:mt-3 [&_h2]:text-base [&_h2]:font-semibold ' +
     '[&_h3]:mt-3 [&_h3]:text-sm [&_h3]:font-semibold ' +
     '[&_a]:text-accent [&_a]:underline ' +
+    '[&_.mention]:rounded [&_.mention]:bg-accent-soft [&_.mention]:px-0.5 [&_.mention]:text-accent ' +
     '[&_code]:rounded [&_code]:bg-surface [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[0.85em] ' +
     '[&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-surface [&_pre]:p-3 ' +
     '[&_blockquote]:border-l-2 [&_blockquote]:border-border-strong [&_blockquote]:pl-3 [&_blockquote]:text-ink-muted';
@@ -27,7 +36,7 @@ const prose =
 /** Read-only renderer for a stored tiptap document. */
 export function RichTextView({ value }: { value: JSONContent | null }) {
     const editor = useEditor(
-        { extensions, content: value, editable: false },
+        { extensions: [...extensions, mention], content: value, editable: false },
         [value],
     );
 
@@ -73,15 +82,25 @@ export function RichTextEditor({
     placeholder = 'Write something…',
     autoFocus = false,
     onSubmit,
+    mentions = [],
 }: {
     value: JSONContent | null;
     onChange: (value: JSONContent) => void;
     placeholder?: string;
     autoFocus?: boolean;
     onSubmit?: () => void;
+    /** Who @ offers. Read on every keystroke, so it can change without a new editor. */
+    mentions?: Mentionable[];
 }) {
+    const people = useRef(mentions);
+    people.current = mentions;
+
     const editor = useEditor({
-        extensions: [...extensions, Placeholder.configure({ placeholder })],
+        extensions: [
+            ...extensions,
+            Placeholder.configure({ placeholder }),
+            mention.configure({ suggestion: mentionSuggestion(() => people.current) }),
+        ],
         content: value,
         autofocus: autoFocus,
         editorProps: {

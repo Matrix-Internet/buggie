@@ -15,7 +15,7 @@ import {
     relativeTime,
 } from '@/components/issue-bits';
 import { Popover, PopoverItem } from '@/components/popover';
-import { RichTextEditor, RichTextView } from '@/components/rich-text';
+import { RichTextEditor, RichTextView, type Mentionable } from '@/components/rich-text';
 import { Diagnostics, type DiagnosticsData } from '@/components/diagnostics';
 import { IssuePicker, type PickedIssue } from '@/components/issue-picker';
 import { AppLayout } from '@/layouts/app-layout';
@@ -870,6 +870,7 @@ export default function ShowIssue({
     can,
     diagnostics,
     relationTypes = [],
+    mentionable = [],
     projectClients = [],
     composer = null,
     versions = [],
@@ -888,6 +889,8 @@ export default function ShowIssue({
     /** Null for clients, and for issues with no captured context. */
     diagnostics: DiagnosticsData | null;
     relationTypes?: { value: string; label: string }[];
+    /** Who @ can name. Empty for a client, who is offered nobody. */
+    mentionable?: Mentionable[];
     /** Clients on this project who can be named in a specific audience. Staff only. */
     projectClients?: Person[];
     /** Who a message from the composer reaches, and whether it can await the client. Staff only. */
@@ -1048,6 +1051,8 @@ export default function ShowIssue({
                                     value={description}
                                     onChange={setDescription}
                                     autoFocus
+                                    // Clients only where they can read it: an issue shared with them.
+                                    mentions={issue.visibility === 'internal' ? mentionable.filter((p) => !p.client) : mentionable}
                                     placeholder="What happens, and what should happen instead?"
                                     onSubmit={() => {
                                         patch({ description });
@@ -1218,6 +1223,8 @@ export default function ShowIssue({
                                     onChange={setBody}
                                     placeholder="Leave a comment…"
                                     onSubmit={submitComment}
+                                    // An internal note offers only the team.
+                                    mentions={internal ? mentionable.filter((p) => !p.client) : mentionable}
                                 />
 
                                 {/* Who this reaches, said in words and always shown:

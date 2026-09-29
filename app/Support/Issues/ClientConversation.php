@@ -11,6 +11,8 @@ use App\Models\Comment;
 use App\Models\Issue;
 use App\Models\User;
 use App\Support\Notifications\Notifier;
+use App\Support\RichText\Mentions;
+use App\Support\RichText\TiptapDocument;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -77,6 +79,7 @@ class ClientConversation
             foreach ($this->audience->visibleTo($issue) as $client) {
                 $this->notifier->record($client, $issue, NotificationReason::AwaitingReply, $staff, [
                     'excerpt' => $excerpt,
+                    'client_excerpt' => TiptapDocument::toPlainText(Mentions::forClients($comment->body, $issue->workspace)),
                     'from' => AuthorLabel::for($staff, $issue->workspace, readerIsStaff: false),
                 ]);
             }

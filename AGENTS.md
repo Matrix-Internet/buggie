@@ -165,6 +165,12 @@ A client's issue payload is built for them in `IssueController::show`: events pa
 `AuthorLabel`, and related issues go through the visibility scope. Add a field there
 and ask whether a client should have it; the test asserts on the raw props.
 
+**Mentions are rewritten on the way in and on the way out** (`App\Support\RichText\Mentions`).
+Saving keeps only mentions of people who may be named there, relabelled with their real
+name. A client is served `Mentions::forClients()`, which names staff as the workspace; a
+quoted excerpt carries a `client_excerpt` that `Notifier::record` swaps in per recipient.
+A new surface that shows rich text or an excerpt to a client must do the same.
+
 ## What a client may know
 
 Three separate gates, and all of them must be open:

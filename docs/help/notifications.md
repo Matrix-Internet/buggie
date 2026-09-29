@@ -210,9 +210,7 @@ See [The issue query language](query-language.md).
 ## What is not here
 
 There is no bell in the top bar — the list is a page, reached from the sidebar. There
-is no unsubscribe link in digest mail, no realtime "Ann is viewing" presence, and no
-`@mention` autocomplete in the editor: mentions are recognised and notified when
-present, but nothing helps you type one.
+is no unsubscribe link in digest mail, and no realtime "Ann is viewing" presence.
 
 ## Related pages
 

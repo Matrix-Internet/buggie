@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Enums\NotificationReason;
 use App\Support\Notifications\Notifier;
 use App\Support\CustomFields\FieldValues;
+use App\Support\RichText\Mentions;
 use App\Support\RichText\TiptapDocument;
 use Illuminate\Support\Facades\DB;
 
@@ -89,7 +90,9 @@ class CreateIssue
                 'That status belongs to another project.',
             );
 
-            $description = $attributes['description'] ?? null;
+            // A new issue is shared with nobody yet, so only staff can be mentioned.
+            $mentionable = Mentions::candidates($project->workspace, null, true, $reporter);
+            $description = Mentions::normalise($attributes['description'] ?? null, $mentionable);
             $number = $project->nextIssueNumber();
 
             $issue = new Issue([
@@ -136,8 +139,9 @@ class CreateIssue
             $issue->watch($reporter, WatchReason::Reported);
             $issue->watch($issue->assignee, WatchReason::Assigned);
 
-            foreach (TiptapDocument::mentionedUserIds($description) as $id) {
-                $issue->watch(User::find($id), WatchReason::Mentioned);
+            foreach ($mentionable->whereIn('id', TiptapDocument::mentionedUserIds($description)) as $mentioned) {
+                $issue->watch($mentioned, WatchReason::Mentioned);
+                $this->notifier->record($mentioned, $issue, NotificationReason::Mentioned, $reporter);
             }
 
             if ($issue->assignee) {
