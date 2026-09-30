@@ -37,6 +37,7 @@ use App\Http\Controllers\LabelController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\NotificationPreferenceController;
+use App\Http\Controllers\Operator\ConsoleController as OperatorConsoleController;
 use App\Http\Controllers\PhaseController;
 use App\Http\Controllers\PortalController;
 use App\Http\Controllers\ProjectController;
@@ -157,6 +158,13 @@ Route::domain($host)->group(function () {
             ->name('verification.send');
 
         Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+    });
+
+    // Who is using the hosted service; self-hosted installs 404 here. `hosted` runs
+    // before `auth` so a stranger gets the 404 too, not a sign-in page that says the
+    // address exists. Operators only, checked by the `operate` gate in the controller.
+    Route::middleware(['hosted', 'auth'])->prefix('operator')->name('operator.')->group(function () {
+        Route::get('/', OperatorConsoleController::class)->name('console');
     });
 });
 

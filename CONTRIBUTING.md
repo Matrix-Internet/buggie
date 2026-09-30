@@ -55,10 +55,17 @@ that catch people:
 
 Buggie is AGPL-3.0, and everything published here stays that way.
 
-There is also a commercial hosted service at buggie.eu, run from a private repository
-that carries this one. That is why the terms below ask for more than the AGPL alone
-would: without them, a contribution could not be used in the hosted service, and the
-practical consequence is that your fix gets reverted rather than shipped.
+There is also a commercial hosted service at buggie.eu. It runs this exact code, with
+nothing added and nothing held back; `BUGGIE_HOSTED=true` is the only difference.
+
+The terms below still ask for more than the AGPL alone would, and the reason is to
+keep one option open. The hosted service may one day want a private add-on, shipped as
+a separate Composer package rather than a fork. Under AGPL §13, anyone who runs a
+modified version as a network service must offer its users the source of that
+version, add-on included, unless every line of the code it builds on can be licensed
+under other terms. One accepted contribution without the licence below would make
+that impossible for good: its author's permission would be needed, and could not be
+assumed.
 
 Being asked to permit that is a reasonable thing to decline. If you would rather not,
 open an issue describing the problem instead — a good bug report is worth more than

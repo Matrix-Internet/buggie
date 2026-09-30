@@ -99,6 +99,13 @@ return Application::configure(basePath: dirname(__DIR__))
             before: AuthenticatesRequests::class,
             prepend: ResolveWorkspace::class,
         );
+
+        // Hosted-only routes must 404 on a self-hosted install before auth can send a
+        // guest to sign in, which would confirm the address exists.
+        $middleware->prependToPriorityList(
+            before: AuthenticatesRequests::class,
+            prepend: RequireHostedMode::class,
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Opt-in: with no SENTRY_LARAVEL_DSN set this does nothing, so a self-hosted

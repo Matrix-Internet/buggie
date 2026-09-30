@@ -10,10 +10,10 @@ set -euo pipefail
 DEPLOY_USER="deploy"
 SWAP_SIZE="2G"
 APP_DIR="/srv/buggie"
-# buggie.eu deploys the private platform repository, which carries the public one as
-# an upstream remote. A self-hoster puts their own clone URL here, or just clones the
-# public repository by hand.
-REPO="${BUGGIE_REPO:-git@github.com:bpowerie25/buggie-platform.git}"
+# The public repository, over HTTPS so the server needs no key to read it. buggie.eu
+# runs exactly this code with BUGGIE_HOSTED=true. A self-hoster deploying a fork puts
+# its clone URL in BUGGIE_REPO.
+REPO="${BUGGIE_REPO:-https://github.com/bpowerie25/buggie.git}"
 
 echo "🚀 Setting up the Buggie production server..."
 

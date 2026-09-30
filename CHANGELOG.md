@@ -12,6 +12,13 @@ today you are running `main`, which is honest rather than ideal — see
 
 ### Added
 
+- **buggie.eu runs this repository, and nothing else.** The private repository the
+  hosted service used to deploy from is retired; its one addition, the read-only
+  operator console at `/operator`, is now here behind the `hosted` middleware and the
+  `operate` gate. A self-hosted install answers 404 there, to guests as well:
+  hosted-only routes now 404 before sign-in is asked for, so they no longer redirect a
+  stranger to the login page. The deploy scripts and runbook clone the public
+  repository over HTTPS, with no deploy key.
 - **Releases publish an image.** Tagging `vX.Y.Z` runs the full suite, then publishes
   `ghcr.io/bpowerie25/buggie` for amd64 and arm64 and creates a GitHub release. The
   self-host compose file runs that image (`BUGGIE_VERSION` pins one), so upgrading is

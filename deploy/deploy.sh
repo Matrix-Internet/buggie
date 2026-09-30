@@ -12,9 +12,9 @@ set -euo pipefail
 COMPOSE="docker compose --project-directory . --env-file .env -f deploy/docker-compose.prod.yml"
 FIRST_RUN=0
 
-# What to deploy. buggie.eu runs the private platform repo, which carries the public
-# one as an upstream remote; a self-hoster runs the public repo directly. Same script
-# either way, so there is only ever one deploy path to keep working.
+# What to deploy. buggie.eu and a self-hoster both run the public repo, the only
+# difference being BUGGIE_HOSTED in .env. Same script either way, so there is only
+# ever one deploy path to keep working.
 REMOTE="${BUGGIE_REMOTE:-origin}"
 BRANCH="${BUGGIE_BRANCH:-main}"
 

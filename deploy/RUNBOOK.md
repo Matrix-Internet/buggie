@@ -16,7 +16,8 @@ public repository, and a hostname next to the exact SSH user, the exact paths an
 exact deploy procedure is a map rather than documentation. Keep yours in your password
 manager with the key.
 
-Deploys the **private** `buggie-platform` repository.
+Deploys the public repository, the same code a self-hoster runs. `BUGGIE_HOSTED=true`
+in `.env` is the only difference.
 
 ---
 
@@ -102,27 +103,11 @@ ssh -i "$SSH_KEY" deploy@$SERVER 'echo in'
 
 ---
 
-## 4. Let the server read the private repository
+## 4. Repository access
 
-As the `deploy` user:
-
-```sh
-ssh -i "$SSH_KEY" deploy@$SERVER
-
-ssh-keygen -t ed25519 -C "buggie.eu deploy" -f ~/.ssh/id_ed25519 -N ""
-cat ~/.ssh/id_ed25519.pub
-```
-
-Copy that line into GitHub → `bpowerie25/buggie-platform` → Settings → Deploy keys →
-Add deploy key. **Leave "Allow write access" unticked.** The server only ever reads.
-
-A deploy key rather than your own account's key: it is scoped to this one repository,
-read-only, and revoking it if the box is ever compromised costs one click and affects
-nothing else.
-
-```sh
-ssh -T git@github.com     # expect "successfully authenticated ... does not provide shell access"
-```
+Nothing to do. The repository is public and the server clones it over HTTPS, so it
+needs no deploy key and holds no GitHub credential at all: there is nothing to revoke
+if the box is ever compromised, and the server can never push.
 
 ---
 
@@ -131,7 +116,7 @@ ssh -T git@github.com     # expect "successfully authenticated ... does not prov
 Still as `deploy`:
 
 ```sh
-git clone git@github.com:bpowerie25/buggie-platform.git /srv/buggie
+git clone https://github.com/bpowerie25/buggie.git /srv/buggie
 cd /srv/buggie
 
 cp --update=none deploy/env.production.example .env
@@ -329,12 +314,10 @@ rather than something reassuringly large.
 
 ## Keeping the hosted service current
 
-`buggie-platform` carries the public repository as an upstream remote. On your own
-machine, not the server:
+Push to `main` of the public repository, then on the server:
 
 ```sh
-cd ~/Sites/buggie-platform
-git fetch upstream && git merge upstream/main && git push
+cd /srv/buggie && git pull && bash deploy/deploy.sh
 ```
 
-Then deploy as in §6. See [`../docs/PLATFORM_REPO.md`](../docs/PLATFORM_REPO.md).
+That is §6; there is nothing else to sync.
