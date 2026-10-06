@@ -3,9 +3,10 @@
 A token-authenticated HTTP API for scripting against a workspace: listing and filing
 issues, reading projects, and updating what a script has found.
 
-Everything here obeys the same rules as the screens. A client's token sees exactly
-what that client sees in the application, and not one issue more — the API reuses the
-same policies rather than implementing its own idea of what is allowed.
+Everything here obeys the same rules as the screens: the API reuses the same policies
+rather than implementing its own idea of what is allowed. Tokens are for members of
+staff, and a token sees what its owner sees in the application. A client's token is
+refused outright.
 
 ## Getting a token
 
@@ -86,10 +87,16 @@ throttle a colleague working from the same office.
 | Status | Means |
 | --- | --- |
 | `401` | No token, an expired token, or one that has been revoked |
-| `403` | The token lacks the ability for this call |
+| `403` | The token lacks the ability for this call, or its owner is not staff (API tokens are for members of staff). Only the first is fixed by a new token |
 | `404` | Wrong workspace, or something you cannot see |
 | `422` | The request was understood and refused; see `errors` |
 | `429` | Too many requests |
 
 A `404` on something you believe exists usually means the token is for a different
 workspace.
+
+## The OpenAPI definition
+
+[`/openapi.yaml`](/openapi.yaml) describes both this API and the reporter ingest API in
+OpenAPI 3.0, for generating clients. A test keeps its list of operations in step with
+the routes.
