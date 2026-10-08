@@ -20,9 +20,10 @@ info:
     rather than an API for Buggie's users; the webhooks Buggie sends to you; and the
     application's own screens.
 
-    Read-then-write caveat for the token API: reads name projects, statuses and labels,
-    but writes take their numeric ids (`project_id`, `status_id`, label ids). Only
-    `GET /v1/projects` is available to read, and it does not return ids yet.
+    Read-then-write for the token API: issue and project reads include numeric ids
+    (`project.id`, `status.id`, label `id`s). `GET /v1/projects/{key}` returns the
+    project's statuses and the workspace's labels so a script can resolve names to
+    ids before writing.
 
     Kept in step with the routes by `tests/Feature/OpenApiSpecTest.php`.
   license:
@@ -211,6 +212,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProjectList'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /v1/projects/{key}:
+    get:
+      operationId: getProject
+      tags: [Projects]
+      summary: Read a project and its catalogs
+      description: >-
+        One project the token's owner can see, plus its statuses and the workspace's
+        labels. Bound by project key (e.g. `WEB`). Needs the `read` ability. Use this
+        to resolve status and label names to ids before a write.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+          example: WEB
+          description: The project's key.
+      responses:
+        '200':
+          description: The project, its statuses, and workspace labels.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectDetail'
         '401':
           $ref: '#/components/responses/Unauthenticated'
         '403':
@@ -474,6 +509,8 @@ components:
     IssueStatus:
       type: object
       properties:
+        id:
+          type: integer
         name:
           type: string
           example: In progress
@@ -486,6 +523,8 @@ components:
     IssueProject:
       type: object
       properties:
+        id:
+          type: integer
         key:
           type: string
           example: WEB
@@ -497,6 +536,13 @@ components:
     PersonRef:
       type: object
       nullable: true
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+    LabelRef:
+      type: object
       properties:
         id:
           type: integer
@@ -525,9 +571,9 @@ components:
           $ref: '#/components/schemas/PersonRef'
         labels:
           type: array
-          description: Label names.
+          description: Labels on the issue, with ids for writes.
           items:
-            type: string
+            $ref: '#/components/schemas/LabelRef'
         occurrences:
           type: integer
           description: How many times this bug has been reported, counting the first.
@@ -606,8 +652,8 @@ components:
         project_id:
           type: integer
           description: >-
-            The project's numeric id, for a project the token's owner can see. No
-            endpoint returns project ids yet: `GET /v1/projects` gives keys and slugs.
+            The project's numeric id, for a project the token's owner can see. Read
+            it from `GET /v1/projects` or `GET /v1/projects/{key}`.
         title:
           type: string
           maxLength: 255
@@ -722,6 +768,8 @@ components:
     Project:
       type: object
       properties:
+        id:
+          type: integer
         key:
           type: string
           example: WEB
@@ -733,6 +781,24 @@ components:
         description:
           type: string
           nullable: true
+    ProjectDetail:
+      type: object
+      properties:
+        data:
+          allOf:
+            - $ref: '#/components/schemas/Project'
+            - type: object
+              properties:
+                statuses:
+                  type: array
+                  description: This project's statuses, ordered for the board.
+                  items:
+                    $ref: '#/components/schemas/IssueStatus'
+                labels:
+                  type: array
+                  description: Workspace labels (shared across projects).
+                  items:
+                    $ref: '#/components/schemas/LabelRef'
     ProjectList:
       type: object
       properties:

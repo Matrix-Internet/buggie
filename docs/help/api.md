@@ -51,6 +51,12 @@ curl -H "Authorization: Bearer <token>" \
 | `POST` | `/api/v1/issues` | `write` |
 | `PATCH` | `/api/v1/issues/{key}` | `write` |
 | `GET` | `/api/v1/projects` | `read` |
+| `GET` | `/api/v1/projects/{key}` | `read` |
+
+Issue and project payloads include numeric ids (`project.id`, `status.id`, label
+`id`s). `GET /api/v1/projects/{key}` also returns that project's statuses and the
+workspace's labels, so a script can resolve a status name to a `status_id` before
+a `PATCH`.
 
 ### Filtering
 

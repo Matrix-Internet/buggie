@@ -111,17 +111,21 @@ class IssueApiController extends Controller
             'type' => $issue->type->value,
             'priority' => $issue->priority->value,
             'status' => [
+                'id' => $issue->status->id,
                 'name' => $issue->status->name,
                 'category' => $issue->status->category->value,
                 'open' => $issue->status->category->isOpen(),
             ],
             'project' => [
+                'id' => $issue->project->id,
                 'key' => $issue->project->key,
                 'slug' => $issue->project->slug,
                 'name' => $issue->project->name,
             ],
             'assignee' => $issue->assignee?->only(['id', 'name']),
-            'labels' => $issue->labels->pluck('name'),
+            // Objects rather than bare names: writes take label ids, and a script that
+            // has just listed an issue should not need a second call to map them.
+            'labels' => $issue->labels->map(fn ($label) => $label->only(['id', 'name']))->values(),
             'occurrences' => $issue->occurrence_count,
             'created_at' => $issue->created_at?->toIso8601String(),
             'updated_at' => $issue->updated_at?->toIso8601String(),

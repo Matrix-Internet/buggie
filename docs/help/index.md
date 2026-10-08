@@ -63,6 +63,7 @@ same endpoint as the web widget. See [Native SDKs](native-sdks.md).
 ## Connecting Buggie to other things
 
 - [The API](api.md) — token-authenticated HTTP access to a workspace.
+- [Local agent loop](local-agent-loop.md) — pull issues into a project checkout, fix, update status.
 - [Webhooks](webhooks.md) — calling a URL when something happens.
 - [Slack and Teams](chat-notifications.md) — the same events, written for people.
 - [Importing](importing.md) — bringing issues in from Mantis, Jira or a CSV.

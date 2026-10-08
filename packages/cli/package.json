@@ -1,0 +1,29 @@
+{
+    "name": "@buggie/cli",
+    "version": "0.1.0",
+    "description": "Pull Buggie issues into local agent briefs, and push status updates back.",
+    "license": "AGPL-3.0-only",
+    "type": "module",
+    "bin": {
+        "buggie": "./bin/buggie.js"
+    },
+    "files": [
+        "bin",
+        "src",
+        "README.md"
+    ],
+    "engines": {
+        "node": ">=22"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Matrix-Internet/buggie.git",
+        "directory": "packages/cli"
+    },
+    "keywords": [
+        "buggie",
+        "bug-tracker",
+        "cli",
+        "agent"
+    ]
+}

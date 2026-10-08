@@ -76,7 +76,50 @@ class ApiTest extends TestCase
         $this->api($this->tokenFor($staff, $workspace), 'GET', $this->apiUrl($workspace, 'issues'))
             ->assertOk()
             ->assertJsonPath('data.0.title', 'Pay now does nothing')
-            ->assertJsonPath('meta.total', 1);
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonStructure([
+                'data' => [['status' => ['id', 'name', 'category'], 'project' => ['id', 'key'], 'labels']],
+            ]);
+    }
+
+    #[Test]
+    public function a_token_reads_a_project_with_status_and_label_catalogs(): void
+    {
+        [$workspace, $staff] = $this->workspaceWithMember(WorkspaceRole::Member, 'acme');
+
+        $project = app(Tenancy::class)->run($workspace, function () {
+            $project = Project::factory()->create(['key' => 'WEB', 'slug' => 'web']);
+            // Factories seed default statuses; a label is workspace-scoped.
+            \App\Models\Label::factory()->create(['name' => 'frontend']);
+
+            return $project;
+        });
+
+        $this->api($this->tokenFor($staff, $workspace), 'GET', $this->apiUrl($workspace, 'projects/WEB'))
+            ->assertOk()
+            ->assertJsonPath('data.id', $project->id)
+            ->assertJsonPath('data.key', 'WEB')
+            ->assertJsonPath('data.labels.0.name', 'frontend')
+            ->assertJsonStructure([
+                'data' => [
+                    'id', 'key', 'slug', 'name',
+                    'statuses' => [['id', 'name', 'category', 'open']],
+                    'labels' => [['id', 'name']],
+                ],
+            ]);
+    }
+
+    #[Test]
+    public function projects_list_includes_ids(): void
+    {
+        [$workspace, $staff] = $this->workspaceWithMember(WorkspaceRole::Member, 'acme');
+
+        $project = app(Tenancy::class)->run($workspace, fn () => Project::factory()->create(['key' => 'WEB']));
+
+        $this->api($this->tokenFor($staff, $workspace), 'GET', $this->apiUrl($workspace, 'projects'))
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $project->id)
+            ->assertJsonPath('data.0.key', 'WEB');
     }
 
     #[Test]

@@ -74,6 +74,8 @@ Route::domain('{workspace}.'.config('buggie.host'))
             Route::get('issues', [\App\Http\Controllers\Api\V1\IssueApiController::class, 'index']);
             Route::get('issues/{issue}', [\App\Http\Controllers\Api\V1\IssueApiController::class, 'show']);
             Route::get('projects', [\App\Http\Controllers\Api\V1\ProjectApiController::class, 'index']);
+            // Bound by key (WEB), not slug: the CLI and scripts already speak in keys.
+            Route::get('projects/{project:key}', [\App\Http\Controllers\Api\V1\ProjectApiController::class, 'show']);
         });
 
         Route::middleware('abilities:write')->group(function () {
